@@ -157,7 +157,7 @@ class BaseGroup(edgy.Model):
 
 class Group(BaseGroup):
     class Meta:
-        tablename = "edgy_guardian_group"
+        tablename = "edgy_guardian_groups"
 
 
 class BaseObjectPermission(edgy):

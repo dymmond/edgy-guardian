@@ -79,9 +79,9 @@ class Apps:
     configuration of the apps.
     """
 
-    def __init__(self, registry: "Registry") -> None:
+    def __init__(self) -> None:
         self.guardian_apps: list[str] = settings.edgy_guardian.apps
-        self.all_models: dict[str, type[edgy.Model]] = registry.models
+        self.all_models: dict[str, type[edgy.Model]] = settings.edgy_guardian.registry.models
         self.app_configs: dict[str, AppConfig] = {}
 
         self.configure()

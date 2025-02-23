@@ -9,6 +9,10 @@ from edgy_guardian._internal._module_loading import import_string
 class EdgyGuardianConfig(BaseModel):
     model_config: dict[str, Any] = {"extra": "allow"}
 
+    registry: edgy.Registry
+    """
+    The registry class. This should be the edgy registry instance.
+    """
     models: dict[str, str] = {}
     """
     Used to understand where the models are located in the application.
