@@ -2,8 +2,8 @@ from typing import Any, ClassVar
 
 import edgy
 
-from edgy_guardian.contenttypes.managers import ContentTypeManager
 from edgy_guardian.apps import apps
+from edgy_guardian.contenttypes.managers import ContentTypeManager
 
 
 class AbstractContentType(edgy.Model):
@@ -123,7 +123,6 @@ class AbstractContentType(edgy.Model):
 
 
 class ContentType(AbstractContentType):
-
     class Meta:
         unique_together = [["app_label", "model"]]
         tablename = "edgy_guardian_contenttypes"

@@ -5,6 +5,17 @@ from edgy.conf import settings
 
 
 @lru_cache
+def get_content_type_model() -> edgy.Model:
+    """
+    Returns the content type model class.
+
+    Returns:
+        type[edgy.Model]: The content type model class.
+    """
+    return settings.edgy_guardian.content_type_model
+
+
+@lru_cache
 def get_user_model() -> edgy.Model:
     """
     Returns the user model class.

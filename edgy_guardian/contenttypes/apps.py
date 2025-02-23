@@ -1,4 +1,4 @@
-from core.apps import AppConfig
+from edgy_guardian.apps import AppConfig
 
 
 class ContentTypesConfig(AppConfig):

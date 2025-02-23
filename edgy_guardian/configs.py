@@ -9,6 +9,10 @@ from edgy_guardian._internal._module_loading import import_string
 class EdgyGuardianConfig(BaseModel):
     model_config: dict[str, Any] = {"extra": "allow"}
 
+    registry: edgy.Registry
+    """
+    The registry class. This should be the edgy registry instance.
+    """
     models: dict[str, str] = {}
     """
     Used to understand where the models are located in the application.
@@ -33,6 +37,10 @@ class EdgyGuardianConfig(BaseModel):
     """
     The group model class. This should be a string that represents the group model class location.
     """
+    content_type_model: str | type[edgy.Model]
+    """
+    The content type model class. This should be a string that represents the content type model class location.
+    """
 
     @field_validator("user_model")
     @classmethod
@@ -51,6 +59,13 @@ class EdgyGuardianConfig(BaseModel):
     @field_validator("group_model")
     @classmethod
     def validate_group_model(cls, value: str) -> edgy.Model:
+        if isinstance(value, edgy.Model):
+            return value
+        return cast(type[edgy.Model], import_string(value))
+
+    @field_validator("content_type_model")
+    @classmethod
+    def validate_content_type_model(cls, value: str) -> edgy.Model:
         if isinstance(value, edgy.Model):
             return value
         return cast(type[edgy.Model], import_string(value))

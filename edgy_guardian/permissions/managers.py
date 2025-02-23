@@ -4,7 +4,6 @@ import edgy
 
 from edgy_guardian.contenttypes.utils import get_content_type
 from edgy_guardian.permissions.exceptions import ObjectNotPersisted
-from edgy_guardian.permissions.utils import ObjectPermissionChecker
 from edgy_guardian.utils import get_groups_model, get_permission_model
 
 Group = get_groups_model()

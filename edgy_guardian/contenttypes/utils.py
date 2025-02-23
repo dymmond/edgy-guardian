@@ -1,9 +1,13 @@
 from typing import Any
 
-from edgy_guardian.contenttypes.models import ContentType
+import edgy
+
+from edgy_guardian.utils import get_content_type_model
+
+ContentType = get_content_type_model()
 
 
-async def get_content_type(obj: Any) -> ContentType:
+async def get_content_type(obj: Any) -> type[edgy.Model]:
     """
     Returns the default content type for the given object.
 

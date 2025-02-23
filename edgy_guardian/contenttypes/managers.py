@@ -1,9 +1,10 @@
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 import edgy
 
-if TYPE_CHECKING:
-    from edgy_guardian.contenttypes.models import ContentType
+from edgy_guardian.utils import get_content_type_model
+
+ContentType = get_content_type_model()
 
 
 class ContentTypeManager(edgy.Manager):
@@ -56,7 +57,7 @@ class ContentTypeManager(edgy.Manager):
         key = (opts.app_label, opts.model_name)
         return self._cache[self.owner.database][key]
 
-    async def get_for_model(self, model: str) -> "ContentType":
+    async def get_for_model(self, model: str) -> type[edgy.Model]:
         """
         Retrieve the ContentType instance for the given model name.
 
