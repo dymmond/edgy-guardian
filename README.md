@@ -1,7 +1,5 @@
 # Edgy Guardian
 
-# Edgy
-
 <p align="center">
   <a href="https://edgy.dymmond.com"><img src="https://res.cloudinary.com/tarsild/image/upload/v1690804138/packages/edgy/logo_wvmjxz.png" alt='Edgy'></a>
 </p>
