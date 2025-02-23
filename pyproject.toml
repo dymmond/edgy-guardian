@@ -4,14 +4,11 @@ build-backend = "hatchling.build"
 
 [project]
 name = "edgy_guardian"
-description = "Permission system for your models with Edgy"
+description = "Per object permissions for Edgy"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 dynamic = ['version']
-license = "MIT"
-authors = [
-    { name = "Tiago Silva", email = "tiago.arasilva@gmail.com" },
-]
+authors = [{ name = "Tiago Silva", email = "tiago.arasilva@gmail.com" }]
 classifiers = [
     "Intended Audience :: Information Technology",
     "Intended Audience :: System Administrators",
@@ -29,7 +26,7 @@ classifiers = [
     "Framework :: AsyncIO",
     "Framework :: AnyIO",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
+    "License :: OSI Approved :: BSD License",
     "Programming Language :: Python :: 3 :: Only",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
@@ -39,7 +36,7 @@ classifiers = [
     "Topic :: Internet :: WWW/HTTP :: HTTP Servers",
     "Topic :: Internet :: WWW/HTTP",
 ]
-dependencies = []
+dependencies = ["edgy>=0.27.1,<1.0.0"]
 keywords = ["edgy_guardian"]
 
 [project.urls]
@@ -71,6 +68,7 @@ testing = [
     "isort>=5.12.0,<6.0.0",
     "pytest>=7.2.2,<9.0.0",
     "pytest-cov>=4.0.0,<5.0.0",
+    "esmerald>=3.6.7",
 ]
 
 [tool.hatch.envs.default.scripts]
