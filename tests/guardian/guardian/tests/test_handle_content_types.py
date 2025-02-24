@@ -15,6 +15,12 @@ async def test_handle_content_types_generate_content_types(client):
 
     assert len(total) == len(models.models)
 
+    await handle_content_types()
+
+    total = await ContentType.query.all()
+
+    assert len(total) == len(models.models)
+
 
 async def test_handle_content_types_when_tables_are_removed_from_registry(client):
     new_registry = Registry(database=models.database)

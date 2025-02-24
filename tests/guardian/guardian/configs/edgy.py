@@ -8,17 +8,23 @@ class EdgyAppSettings(BaseSettings):
         "accounts.models",
         "permissions.models",
         "contenttypes.models",
+        "products.models",
+        "items.models",
     ]
     edgy_guardian: EdgyGuardianConfig = EdgyGuardianConfig(
         models={
             "accounts": "accounts.models",
             "contenttypes": "contenttypes.models",
             "permissions": "permissions.models",
+            "products": "products.models",
+            "items": "items.models",
         },
         apps=[
             "accounts.apps.AccountsConfig",
             "permissions.apps.PermissionsConfig",
             "contenttypes.apps.ContentTypesConfig",
+            "products.apps.ProductsConfig",
+            "items.apps.ItemsConfig",
         ],
         content_type_model="ContentType",
         user_model="User",
