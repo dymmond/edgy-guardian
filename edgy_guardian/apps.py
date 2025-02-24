@@ -8,9 +8,12 @@ from pydantic import BaseModel
 
 from edgy_guardian._internal._module_loading import import_string
 from edgy_guardian.exceptions import GuardianImproperlyConfigured
+from edgy_guardian.utils import get_content_type_model
 
 if TYPE_CHECKING:
-    from edgy import Registry
+    from edgy_guardian.contenttypes.models import ContentType as BaseContentType
+
+ContentType = get_content_type_model()
 
 
 class AppConfig(BaseModel):
@@ -130,3 +133,46 @@ class Apps:
 
 
 apps = Apps()
+
+
+async def manage_content_types() -> None:
+    """
+    Manages the content types of the application.
+
+    This function is used to manage the content types of the application.
+    It creates the content types for all the models that are registered
+    with the application.
+
+    This function **must be run** before any other operation that
+    involves content types or permissions.
+
+    Usually, using a lifespan event is the best way to run this function.
+    """
+    from edgy_guardian.contenttypes.models import ContentType
+
+    # Gets all the existing content types already in the database
+    existing_content_types: list["BaseContentType"] = await ContentType.query.all()
+
+    # Deleted apps
+    deleted_apps: dict[str, str] = {}
+
+    # New apps
+    new_apps: dict[str, str] = {}
+
+    # Any possible deleted model
+    for ctype in existing_content_types:
+        if ctype.app_label not in apps.all_models:
+            deleted_apps[ctype.app_label] = ctype.model
+
+    # Making sure we get the new models to be added to the content types table
+    for name, model_class in apps.all_models.items():
+        if name not in deleted_apps:
+            new_apps[name] = model_class.meta.tablename
+
+    # Deleting the content types of the deleted apps
+    for app_label, model in deleted_apps.items():
+        await ContentType.query.filter(app_label=app_label, model=model).delete()
+
+    # Creating the content types of the new apps
+    for name, model in new_apps.items():
+        await ContentType.query.get_or_create(app_label=name, model=model)

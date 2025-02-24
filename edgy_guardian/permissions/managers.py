@@ -95,37 +95,10 @@ class BaseObjectPermissionManager(edgy.Manager):
             raise ObjectNotPersisted("Object %s needs to be persisted first" % obj)
         ctype = await get_content_type(obj)
         if not isinstance(perm, Permission):
-            permission = Permission.query.get(content_type=ctype, codename=perm)
+            permission = await Permission.query.get(content_type=ctype, codename=perm)
         else:
             permission = perm
 
         kwargs = {"permission": permission, self.user_or_group_field: user_or_group}
         obj_perm, _ = await self.get_or_create(**kwargs)
         return obj_perm
-
-    # def bulk_assign_perm(self, perm: str, user_or_group: str, queryset: edgy.QuerySet) -> Any:
-    #     """
-    #     Bulk assigns permissions with given `perm` for an objects in `queryset` and
-    #     `user_or_group`.
-    #     """
-    #     if isinstance(queryset, list):
-    #         ctype = get_content_type(queryset[0])
-    #     else:
-    #         ctype = get_content_type(queryset.model_class)
-
-    #     if not isinstance(perm, Permission):
-    #         permission = Permission.query.get(content_type=ctype, codename=perm)
-    #     else:
-    #         permission = perm
-
-    #     checker = ObjectPermissionChecker(user_or_group)
-
-    #     assigned_perms = []
-    #     for instance in queryset:
-    #         if not checker.has_perm(permission.codename, instance):
-    #             kwargs = {"permission": permission, self.user_or_group_field: user_or_group}
-    #             kwargs["content_object"] = instance
-    #             assigned_perms.append(self.model(**kwargs))
-    #     self.model.query.bulk_create(assigned_perms)
-
-    #     return assigned_perms
