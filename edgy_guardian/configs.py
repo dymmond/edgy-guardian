@@ -1,7 +1,9 @@
 from typing import Any
 
 import edgy
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator
+
+from edgy_guardian.enums import DefaultEnum
 
 obj_setattr = object.__setattr__
 
@@ -25,11 +27,11 @@ class EdgyGuardianConfig(BaseModel):
 
     The apps are the edgy guardian AppsConfig classes.
     """
-    user_model: str
+    user_model: str | None = None
     """
     The user model class. This should be a string that represents the user model class location.
     """
-    permission_model: str
+    permission_model: str | None = None
     """
     The permission model class. This should be a string that represents the permission model class location.
     """
@@ -37,10 +39,25 @@ class EdgyGuardianConfig(BaseModel):
     """
     The group model class. This should be a string that represents the group model class location.
     """
-    content_type_model: str
+    content_type_model: str | None = None
     """
     The content type model class. This should be a string that represents the content type model class location.
     """
+
+    @model_validator(mode="after")
+    def validate_models(self) -> None:
+        """
+        Validates the models and makes sure that they are in the correct format.
+        """
+        if self.user_model is None:
+            self.user_model = DefaultEnum.USER_DEFAULT
+        if self.permission_model is None:
+            self.permission_model = DefaultEnum.PERMISSION_DEFAULT
+        if self.group_model is None:
+            self.group_model = DefaultEnum.GROUP_DEFAULT
+        if self.content_type_model is None:
+            self.content_type_model = DefaultEnum.CONTENT_TYPE_DEFAULT
+        return self
 
     def register(self, registry: edgy.Registry) -> edgy.Registry:
         """

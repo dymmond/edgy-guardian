@@ -20,8 +20,8 @@ class EdgyAppSettings(BaseSettings):
             "permissions.apps.PermissionsConfig",
             "contenttypes.apps.ContentTypesConfig",
         ],
-        content_type_model="guardian.apps.contenttypes.models.ContentType",
-        user_model="guardian.apps.accounts.models.User",
-        permission_model="guardian.apps.permissions.models.Permission",
-        group_model="guardian.apps.permissions.models.Group",
+        content_type_model="ContentType",
+        user_model="User",
+        permission_model="Permission",
+        group_model="Group",
     )

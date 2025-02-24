@@ -31,17 +31,17 @@ def get_application():
 
     # Initialise the registry
     edgy_settings.edgy_guardian.register(settings.registry)
-
     # ensure the settings are loaded
-    monkay.evaluate_settings(ignore_preload_import_errors=False, onetime=False)
+    monkay.evaluate_settings(
+        ignore_preload_import_errors=False,
+        onetime=False,
+    )
 
     app = Esmerald(
         on_startup=[settings.registry.__aenter__],
         on_shutdown=[settings.registry.__aexit__],
     )
     monkay.set_instance(Instance(registry=app.settings.registry, app=app))
-    breakpoint()
-    # manage_content_types()
     return app
 
 

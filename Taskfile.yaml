@@ -60,6 +60,12 @@ tasks:
     cmds:
       - ESMERALD_SETTINGS_MODULE=guardian.configs.testing.settings.TestingAppSettings pytest {{.TESTONLY}} -s --disable-warnings
 
+  test_man:
+    desc: Runs the suite tests for specific modules
+    dir: "tests/guardian"
+    cmds:
+      - ESMERALD_SETTINGS_MODULE=guardian.configs.testing.settings.TestingAppSettings hatch run test:test_man {{ .TESTONLY}}
+
   coverage:
     desc: Runs the coverage tests
     dir: "tests/guardian"

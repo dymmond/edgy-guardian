@@ -71,6 +71,7 @@ testing = [
     "esmerald>=3.6.7",
     "edgy[postgres]",
     "httpx",
+    "pytest-pspec",
 ]
 
 [tool.hatch.envs.default.scripts]
@@ -155,7 +156,7 @@ module = "docs_src.*"
 ignore_errors = true
 
 [tool.pytest.ini_options]
-addopts = ["--strict-config", "--strict-markers"]
+addopts = ["--strict-config", "--strict-markers", "--pspec"]
 xfail_strict = true
 junit_family = "xunit2"
 

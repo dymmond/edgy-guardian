@@ -2,8 +2,6 @@ from functools import lru_cache
 
 import edgy
 
-from edgy_guardian._internal._module_loading import import_string
-
 
 @lru_cache
 def get_content_type_model() -> edgy.Model:
@@ -16,7 +14,8 @@ def get_content_type_model() -> edgy.Model:
     from edgy.conf import settings
 
     model = settings.edgy_guardian.content_type_model
-    return import_string(model)
+    db_model = settings.edgy_guardian.registry.models[model]
+    return db_model
 
 
 @lru_cache
@@ -30,7 +29,8 @@ def get_user_model() -> edgy.Model:
     from edgy.conf import settings
 
     model = settings.edgy_guardian.user_model
-    return import_string(model)
+    db_model = settings.edgy_guardian.registry.models[model]
+    return db_model
 
 
 @lru_cache
@@ -44,7 +44,8 @@ def get_permission_model() -> edgy.Model:
     from edgy.conf import settings
 
     model = settings.edgy_guardian.permission_model
-    return import_string(model)
+    db_model = settings.edgy_guardian.registry.models[model]
+    return db_model
 
 
 @lru_cache
@@ -58,4 +59,5 @@ def get_groups_model() -> edgy.Model:
     from edgy.conf import settings
 
     model = settings.edgy_guardian.group_model
-    return import_string(model)
+    db_model = settings.edgy_guardian.registry.models[model]
+    return db_model

@@ -48,7 +48,7 @@ class AbstractContentType(edgy.Model):
         from edgy_guardian.apps import get_apps
 
         app_config = get_apps().get_app_config(self.app_label)
-        return app_config.get_app_label()
+        return app_config.get_app_name()
 
     def model_class(self) -> edgy.Model:
         """
@@ -118,7 +118,7 @@ class AbstractContentType(edgy.Model):
         for app_config in get_apps().app_configs.items():
             for models in app_config.get_models():
                 await cls.query.update_or_create(
-                    app_label=app_config.get_app_label(),
+                    app_label=app_config.get_app_name(),
                     defaults={"model": models.__name__},
                 )
         return True
@@ -127,4 +127,3 @@ class AbstractContentType(edgy.Model):
 class BaseContentType(AbstractContentType):
     class Meta:
         unique_together = [("app_label", "model")]
-        tablename = "edgy_guardian_contenttypes"

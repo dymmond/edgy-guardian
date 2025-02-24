@@ -10,7 +10,11 @@ from esmerald.conf import settings
 from esmerald.testclient import EsmeraldTestClient
 from httpx import ASGITransport, AsyncClient
 
+from edgy_guardian.loader import handle_content_types
+
 from ..main import get_application
+
+models: Registry = settings.registry
 
 
 def create_app():
@@ -39,9 +43,9 @@ def anyio_backend():
 
 @pytest.fixture(autouse=True, scope="function")
 async def create_test_database():
-    models: Registry = settings.registry
     async with models.database:
         await models.create_all()
+        await handle_content_types()
         yield
         if not models.database.drop:
             await models.drop_all()
@@ -49,7 +53,6 @@ async def create_test_database():
 
 @pytest.fixture(autouse=True, scope="function")
 async def rollback_transactions():
-    models: Registry = settings.registry
     async with models.database:
         yield
 

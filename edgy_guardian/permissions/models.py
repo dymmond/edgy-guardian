@@ -43,7 +43,6 @@ class BasePermission(edgy.Model):
 
 class Permission(BasePermission):
     class Meta:
-        tablename = "edgy_guardian_permission"
         unique_together = [("content_type", "codename")]
 
     @classmethod
@@ -152,9 +151,7 @@ class BaseGroup(edgy.Model):
         return self.name
 
 
-class Group(BaseGroup):
-    class Meta:
-        tablename = "edgy_guardian_groups"
+class Group(BaseGroup): ...
 
 
 class BaseObjectPermission(edgy.Model):
