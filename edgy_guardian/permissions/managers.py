@@ -2,12 +2,9 @@ from typing import Any
 
 import edgy
 
-from edgy_guardian.contenttypes.utils import get_content_type
+from edgy_guardian.content_types.utils import get_content_type
 from edgy_guardian.permissions.exceptions import ObjectNotPersisted
-from edgy_guardian.utils import get_groups_model, get_permission_model
-
-Group = get_groups_model()
-Permission = get_permission_model()
+from edgy_guardian.utils import get_permission_model
 
 
 class PermissionManager(edgy.Manager):
@@ -94,8 +91,8 @@ class BaseObjectPermissionManager(edgy.Manager):
         if getattr(obj, "pk", None) is None:
             raise ObjectNotPersisted("Object %s needs to be persisted first" % obj)
         ctype = await get_content_type(obj)
-        if not isinstance(perm, Permission):
-            permission = await Permission.query.get(content_type=ctype, codename=perm)
+        if not isinstance(perm, get_permission_model()):
+            permission = await get_permission_model().query.get(content_type=ctype, codename=perm)
         else:
             permission = perm
 

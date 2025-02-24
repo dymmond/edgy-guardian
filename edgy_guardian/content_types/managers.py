@@ -2,10 +2,6 @@ from typing import Any
 
 import edgy
 
-from edgy_guardian.utils import get_content_type_model
-
-ContentType = get_content_type_model()
-
 
 class ContentTypeManager(edgy.Manager):
     def __init__(self, *args: Any, **kwargs: Any) -> None:

@@ -1,4 +1,5 @@
 import inspect
+from functools import lru_cache
 from typing import TYPE_CHECKING
 
 import edgy
@@ -6,14 +7,12 @@ from edgy.conf import settings
 from edgy.utils.compat import is_class_and_subclass
 from pydantic import BaseModel
 
-from edgy_guardian._internal._module_loading import import_string
+from edgy_guardian._internal._module_loading import import_module, import_string
 from edgy_guardian.exceptions import GuardianImproperlyConfigured
 from edgy_guardian.utils import get_content_type_model
 
 if TYPE_CHECKING:
-    from edgy_guardian.contenttypes.models import ContentType as BaseContentType
-
-ContentType = get_content_type_model()
+    from edgy_guardian.content_types.models import ContentType as BaseContentType
 
 
 class AppConfig(BaseModel):
@@ -26,11 +25,17 @@ class AppConfig(BaseModel):
 
     __app_models__: dict[str, type[edgy.Model]] = {}
 
-    def get_app_label(self) -> str:
+    def get_app_name(self) -> str:
         """
         Returns the name of the application.
         """
         return self.name
+
+    def get_app_label(self) -> str:
+        """
+        Returns the label of the application.
+        """
+        return getattr(self, "label", None)
 
     def get_verbose_name(self) -> str:
         """
@@ -46,7 +51,7 @@ class AppConfig(BaseModel):
             return self.__app_models__[name.capitalize()]
         except KeyError:
             raise GuardianImproperlyConfigured(
-                f"Model '{name}' is not configured in '{self.get_app_label()}'."
+                f"Model '{name}' is not configured in '{self.get_app_name()}'."
             ) from None
 
     def get_models(self) -> list[type[edgy.Model]]:
@@ -54,17 +59,20 @@ class AppConfig(BaseModel):
         Returns the models of the application.
         """
         try:
-            location = settings.edgy_guardian.models[self.name]
+            location = settings.edgy_guardian.models[self.name.lower()]
         except KeyError:
-            raise GuardianImproperlyConfigured(f"App '{self.name}' is not configured.") from None
+            raise GuardianImproperlyConfigured(
+                f"App '{self.name.lower()}' is not configured."
+            ) from None
 
         models: dict[str, type[edgy.Model]] = {}
-        module = import_string(location)
+        module = import_module(location)
 
         members = inspect.getmembers(
             module,
             lambda attr: is_class_and_subclass(attr, edgy.Model)
             and not attr.meta.abstract
+            and attr.meta.registry is not None
             and not is_class_and_subclass(attr, edgy.ReflectModel),
         )
         for name, model in members:
@@ -85,8 +93,13 @@ class Apps:
     def __init__(self) -> None:
         self.guardian_apps: list[str] = settings.edgy_guardian.apps
         self.all_models: dict[str, type[edgy.Model]] = settings.edgy_guardian.registry.models
-        self.app_configs: dict[str, AppConfig] = {}
 
+        if self.all_models is None:
+            raise GuardianImproperlyConfigured(
+                "No models are registered in the registry. Did you run the `edgy_guardian.registry.register(registry)` function?",
+            )
+        self.app_configs: dict[str, AppConfig] = {}
+        breakpoint()
         self.configure()
 
     def configure(self) -> None:
@@ -100,7 +113,7 @@ class Apps:
                 raise GuardianImproperlyConfigured(
                     f"There is already an app with the name '{app.name}'. Names must be unique."
                 )
-            self.app_configs[app.get_app_label()] = app
+            self.app_configs[app.get_app_name()] = app
             app.__app_models__ = app.get_models()
 
     def get_app_configs(self) -> dict[str, AppConfig]:
@@ -135,6 +148,11 @@ class Apps:
 apps = Apps()
 
 
+@lru_cache
+def get_apps() -> Apps:
+    return apps
+
+
 async def manage_content_types() -> None:
     """
     Manages the content types of the application.
@@ -148,10 +166,9 @@ async def manage_content_types() -> None:
 
     Usually, using a lifespan event is the best way to run this function.
     """
-    from edgy_guardian.contenttypes.models import ContentType
 
     # Gets all the existing content types already in the database
-    existing_content_types: list["BaseContentType"] = await ContentType.query.all()
+    existing_content_types: list["BaseContentType"] = await get_content_type_model().query.all()
 
     # Deleted apps
     deleted_apps: dict[str, str] = {}
@@ -171,8 +188,8 @@ async def manage_content_types() -> None:
 
     # Deleting the content types of the deleted apps
     for app_label, model in deleted_apps.items():
-        await ContentType.query.filter(app_label=app_label, model=model).delete()
+        await get_content_type_model().query.filter(app_label=app_label, model=model).delete()
 
     # Creating the content types of the new apps
     for name, model in new_apps.items():
-        await ContentType.query.get_or_create(app_label=name, model=model)
+        await get_content_type_model().query.get_or_create(app_label=name, model=model)

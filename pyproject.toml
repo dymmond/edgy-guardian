@@ -69,6 +69,8 @@ testing = [
     "pytest>=7.2.2,<9.0.0",
     "pytest-cov>=4.0.0,<5.0.0",
     "esmerald>=3.6.7",
+    "edgy[postgres]",
+    "httpx",
 ]
 
 [tool.hatch.envs.default.scripts]

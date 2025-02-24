@@ -5,12 +5,9 @@ import edgy
 from sqlalchemy.exc import IntegrityError
 
 from edgy_guardian.permissions.managers import GroupManager, PermissionManager
-from edgy_guardian.utils import get_content_type_model, get_user_model
+from edgy_guardian.utils import get_user_model
 
 logger = logging.getLogger(__name__)
-
-ContentType = get_content_type_model()
-User = get_user_model()
 
 
 class BasePermission(edgy.Model):
@@ -108,7 +105,7 @@ class Permission(BasePermission):
         Returns:
             None
         """
-        assert isinstance(users, list) or isinstance(users, User), (
+        assert isinstance(users, list) or isinstance(users, get_user_model()), (
             "Users must be a list or a User instance."
         )
 
@@ -160,7 +157,7 @@ class Group(BaseGroup):
         tablename = "edgy_guardian_groups"
 
 
-class BaseObjectPermission(edgy):
+class BaseObjectPermission(edgy.Model):
     """
     BaseObjectPermission is an abstract base model that defines a foreign key relationship
     to the Permission model. This class is intended to be inherited by other models that

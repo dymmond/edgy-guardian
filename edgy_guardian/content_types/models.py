@@ -2,8 +2,7 @@ from typing import Any, ClassVar
 
 import edgy
 
-from edgy_guardian.apps import apps
-from edgy_guardian.contenttypes.managers import ContentTypeManager
+from edgy_guardian.content_types.managers import ContentTypeManager
 
 
 class AbstractContentType(edgy.Model):
@@ -46,8 +45,9 @@ class AbstractContentType(edgy.Model):
         Returns:
             str: The app label name.
         """
+        from edgy_guardian.apps import get_apps
 
-        app_config = apps.get_app_config(self.app_label)
+        app_config = get_apps().get_app_config(self.app_label)
         return app_config.get_app_label()
 
     def model_class(self) -> edgy.Model:
@@ -61,9 +61,10 @@ class AbstractContentType(edgy.Model):
         Raises:
             LookupError: If the model cannot be found.
         """
+        from edgy_guardian.apps import get_apps
 
         try:
-            return apps.get_model(self.app_label, self.model)
+            return get_apps().get_model(self.app_label, self.model)
         except LookupError:
             return None
 
@@ -112,8 +113,9 @@ class AbstractContentType(edgy.Model):
         Returns:
             bool: Always returns True.
         """
+        from edgy_guardian.apps import get_apps
 
-        for app_config in apps.app_configs.items():
+        for app_config in get_apps().app_configs.items():
             for models in app_config.get_models():
                 await cls.query.update_or_create(
                     app_label=app_config.get_app_label(),
@@ -122,7 +124,7 @@ class AbstractContentType(edgy.Model):
         return True
 
 
-class ContentType(AbstractContentType):
+class BaseContentType(AbstractContentType):
     class Meta:
-        unique_together = [["app_label", "model"]]
+        unique_together = [("app_label", "model")]
         tablename = "edgy_guardian_contenttypes"

@@ -4,8 +4,6 @@ import edgy
 
 from edgy_guardian.utils import get_content_type_model
 
-ContentType = get_content_type_model()
-
 
 async def get_content_type(obj: Any) -> type[edgy.Model]:
     """
@@ -21,4 +19,4 @@ async def get_content_type(obj: Any) -> type[edgy.Model]:
     ContentType
         The content type of the object.
     """
-    return await ContentType.query.get_for_model(obj)
+    return await get_content_type_model().query.get_for_model(obj)

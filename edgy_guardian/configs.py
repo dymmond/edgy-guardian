@@ -1,17 +1,17 @@
-from typing import Any, cast
+from typing import Any
 
 import edgy
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel
 
-from edgy_guardian._internal._module_loading import import_string
+obj_setattr = object.__setattr__
 
 
 class EdgyGuardianConfig(BaseModel):
-    model_config: dict[str, Any] = {"extra": "allow"}
+    model_config: dict[str, Any] = {"extra": "allow", "arbitrary_types_allowed": True}
 
-    registry: edgy.Registry
+    registry: edgy.Registry | None = None
     """
-    The registry class. This should be the edgy registry instance.
+    The registry that is used to store the models.
     """
     models: dict[str, str] = {}
     """
@@ -25,47 +25,28 @@ class EdgyGuardianConfig(BaseModel):
 
     The apps are the edgy guardian AppsConfig classes.
     """
-    user_model: str | type[edgy.Model]
+    user_model: str
     """
     The user model class. This should be a string that represents the user model class location.
     """
-    permission_model: str | type[edgy.Model]
+    permission_model: str
     """
     The permission model class. This should be a string that represents the permission model class location.
     """
-    group_model: str | type[edgy.Model]
+    group_model: str | None = None
     """
     The group model class. This should be a string that represents the group model class location.
     """
-    content_type_model: str | type[edgy.Model]
+    content_type_model: str
     """
     The content type model class. This should be a string that represents the content type model class location.
     """
 
-    @field_validator("user_model")
-    @classmethod
-    def validate_user_model(cls, value: str) -> edgy.Model:
-        if isinstance(value, edgy.Model):
-            return value
-        return cast(type[edgy.Model], import_string(value))
+    def register(self, registry: edgy.Registry) -> edgy.Registry:
+        """
+        Registers the application registry object and returns it.
 
-    @field_validator("permission_model")
-    @classmethod
-    def validate_permission_model(cls, value: str) -> edgy.Model:
-        if isinstance(value, edgy.Model):
-            return value
-        return cast(type[edgy.Model], import_string(value))
-
-    @field_validator("group_model")
-    @classmethod
-    def validate_group_model(cls, value: str) -> edgy.Model:
-        if isinstance(value, edgy.Model):
-            return value
-        return cast(type[edgy.Model], import_string(value))
-
-    @field_validator("content_type_model")
-    @classmethod
-    def validate_content_type_model(cls, value: str) -> edgy.Model:
-        if isinstance(value, edgy.Model):
-            return value
-        return cast(type[edgy.Model], import_string(value))
+        This is used after to filter and manage Edgy Guardian models.
+        """
+        setattr(self, "registry", registry)  # noqa
+        return self.registry

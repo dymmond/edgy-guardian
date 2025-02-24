@@ -9,7 +9,7 @@ from edgy_guardian.utils import (
 )
 
 if TYPE_CHECKING:
-    from edgy_guardian.contenttypes.models import ContentType as BaseContentType
+    from edgy_guardian.content_types.models import ContentType as BaseContentType
 
 User = get_user_model()
 Group = get_groups_model()
