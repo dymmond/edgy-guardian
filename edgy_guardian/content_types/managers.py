@@ -62,7 +62,7 @@ class ContentTypeManager(edgy.Manager):
         Returns:
             ContentType: The ContentType instance.
         """
-        return await self.get(model=model)
+        return await self.get(model=model.meta.tablename)
 
     async def get_for_id(self, id: Any) -> tuple[str, str]:
         """

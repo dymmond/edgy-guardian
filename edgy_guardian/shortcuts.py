@@ -1,20 +1,16 @@
 from functools import lru_cache
 from typing import TYPE_CHECKING, Any
 
+from edgy_guardian.permissions.utils import get_identity
 from edgy_guardian.utils import (
     get_content_type_model,
-    get_groups_model,
+    get_group_obj_perms_model,
     get_permission_model,
-    get_user_model,
+    get_user_obj_perms_model,
 )
 
 if TYPE_CHECKING:
-    from edgy_guardian.content_types.models import ContentType as BaseContentType
-
-User = get_user_model()
-Group = get_groups_model()
-ContentType = get_content_type_model()
-Permission = get_permission_model()
+    from edgy_guardian.content_types.models import BaseContentType
 
 
 async def assign_perm(
@@ -47,12 +43,34 @@ async def assign_perm(
         # Revoke the 'delete' permission from a group globally
         await assign_perm('delete', group_instance, revoke=True)
     """
-    return await Permission.assign_permission(
-        users=user_or_group,
-        obj=obj,
-        name=perm,
-        revoke=revoke,
-    )
+    user, group = get_identity(user_or_group)
+
+    if obj is None:
+        if not isinstance(perm, get_permission_model()):
+            try:
+                app_label, codename = perm.split(".", 1)
+            except ValueError:
+                raise ValueError(
+                    "For global permissions, first argument must be in"
+                    " format: 'app_label.codename' (is %r)" % perm
+                ) from None
+
+            perm = get_permission_model().query.get(
+                content_type__app_label=app_label, codename=codename
+            )
+
+    if not isinstance(perm, get_permission_model()):
+        if "." in perm:
+            app_label, codename = perm.split(".", 1)
+
+    breakpoint()
+    if user:
+        model = get_user_obj_perms_model(obj)
+        return await model.query.assign_perm(perm, user, obj)
+
+    if group:
+        model = get_group_obj_perms_model(obj)
+        return await model.query.assign_perm(perm, group, obj)
 
 
 async def bulk_assign_perm(
@@ -85,7 +103,7 @@ async def bulk_assign_perm(
         # Revoke multiple permissions from a group globally
         await bulk_assign_perm(['delete', 'create'], group_instance, revoke=True)
     """
-    return await Permission.assign_permission(
+    return await get_permission_model().assign_permission(
         users=user_or_group,
         obj=obj,
         names=perms,
@@ -117,4 +135,4 @@ async def _get_content_type_cached(app_label: str, codename: str) -> "BaseConten
         # Retrieve and cache the content type for the 'auth' app and 'user' model
         content_type = await _get_content_type_cached('auth', 'user')
     """
-    return await ContentType.query.get(app_label=app_label, model=codename)
+    return await get_content_type_model().query.get(app_label=app_label, model=codename)

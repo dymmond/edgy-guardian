@@ -90,12 +90,29 @@ class BaseObjectPermissionManager(edgy.Manager):
         """
         if getattr(obj, "pk", None) is None:
             raise ObjectNotPersisted("Object %s needs to be persisted first" % obj)
+
         ctype = await get_content_type(obj)
         if not isinstance(perm, get_permission_model()):
-            permission = await get_permission_model().query.get(content_type=ctype, codename=perm)
+            permission, _ = await get_permission_model().query.get_or_create(
+                content_type=ctype, codename=perm, name=perm.capitalize()
+            )
         else:
             permission = perm
 
+        breakpoint()
         kwargs = {"permission": permission, self.user_or_group_field: user_or_group}
-        obj_perm, _ = await self.get_or_create(**kwargs)
+        obj_perm, _ = await get_permission_model().query.get_or_create(**kwargs)
         return obj_perm
+
+
+class UserObjectPermissionManager(BaseObjectPermissionManager):
+    """
+    Manager class for handling operations related to UserObjectPermission model.
+
+    Methods:
+    --------
+    assign_perm(perm: str, user: User, obj: Any) -> UserObjectPermission:
+        Asynchronously assigns a permission to a user for a specific object.
+    """
+
+    ...

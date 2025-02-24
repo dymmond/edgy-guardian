@@ -15,7 +15,7 @@ class ObjectPermissionChecker:
 
 
 def get_identity(identity: Any) -> tuple[edgy.Model, bool | None]:
-    if isinstance(identity, edgy.Manager):
+    if isinstance(identity, (edgy.Manager, edgy.QuerySet)):
         identity_model_type = identity.model_class
         if identity_model_type == get_user_model():
             return identity, False
