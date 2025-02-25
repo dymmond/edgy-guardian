@@ -1,6 +1,14 @@
+from __future__ import annotations
+
 from typing import Any
 
+import edgy
+
 from edgy_guardian.utils import get_permission_model
+
+
+async def has_user_perm(user: type[edgy.Model], perm: str, obj: Any) -> bool:
+    return await get_permission_model().query.has_user_perm(user, perm, obj)
 
 
 async def assign_perm(

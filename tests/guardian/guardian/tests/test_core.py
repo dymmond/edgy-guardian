@@ -4,7 +4,7 @@ from edgy import Registry
 from esmerald.conf import settings
 from permissions.models import Permission
 
-from edgy_guardian.shortcuts import assign_perm
+from edgy_guardian.shortcuts import assign_perm, has_user_perm
 from tests.factories import ItemFactory, ProductFactory, UserFactory
 
 models: Registry = settings.registry
@@ -84,3 +84,76 @@ async def test_assign_and_remove_permissions_to_users():
     total_users_in_permission = await perms[1].users.all()
 
     assert len(total_users_in_permission) == 1
+
+
+async def test_user_has_permission():
+    user = await UserFactory().build_and_save()
+    user_two = await UserFactory().build_and_save()
+    item = await ItemFactory().build_and_save()
+    product = await ProductFactory().build_and_save()
+
+    # Add Users
+    await assign_perm(perm="create", user_or_group=[user, user_two], obj=item)
+    await assign_perm(perm="create", user_or_group=[user_two], obj=product)
+
+    # Check if user has permission
+    has_permission = await has_user_perm(user=user, perm="create", obj=item)
+
+    assert has_permission is True
+
+    has_permission = await has_user_perm(user=user_two, perm="create", obj=item)
+
+    assert has_permission is True
+
+    has_permission = await has_user_perm(user=user_two, perm="create", obj=product)
+
+    assert has_permission is True
+
+
+async def test_user_does_not_have_permission():
+    user = await UserFactory().build_and_save()
+    user_two = await UserFactory().build_and_save()
+    item = await ItemFactory().build_and_save()
+    product = await ProductFactory().build_and_save()
+
+    # Add Users
+    await assign_perm(perm="create", user_or_group=[user], obj=item)
+    await assign_perm(perm="create", user_or_group=[user_two], obj=product)
+
+    has_permission = await has_user_perm(user=user, perm="create", obj=product)
+
+    assert has_permission is False
+
+    has_permission = await has_user_perm(user=user_two, perm="create", obj=item)
+
+    assert has_permission is False
+
+
+async def test_user_does_not_have_permission_then_it_added_and_it_does():
+    user = await UserFactory().build_and_save()
+    user_two = await UserFactory().build_and_save()
+    item = await ItemFactory().build_and_save()
+    product = await ProductFactory().build_and_save()
+
+    # Add Users
+    await assign_perm(perm="create", user_or_group=[user], obj=item)
+    await assign_perm(perm="create", user_or_group=[user_two], obj=product)
+
+    has_permission = await has_user_perm(user=user, perm="create", obj=product)
+
+    assert has_permission is False
+
+    has_permission = await has_user_perm(user=user_two, perm="create", obj=item)
+
+    assert has_permission is False
+
+    await assign_perm(perm="create", user_or_group=[user], obj=product)
+    await assign_perm(perm="create", user_or_group=[user_two], obj=item)
+
+    has_permission = await has_user_perm(user=user, perm="create", obj=product)
+
+    assert has_permission is True
+
+    has_permission = await has_user_perm(user=user_two, perm="create", obj=item)
+
+    assert has_permission is True

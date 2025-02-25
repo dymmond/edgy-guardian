@@ -4,6 +4,7 @@ from typing import Any, ClassVar
 import edgy
 from sqlalchemy.exc import IntegrityError
 
+from edgy_guardian.content_types.utils import get_content_type
 from edgy_guardian.enums import UserGroup
 from edgy_guardian.permissions.managers import (
     GroupManager,
@@ -129,6 +130,26 @@ class BasePermission(BaseUserGroup):
             users = [users]
 
         return await cls.__assign_permission(users, permission, revoke)
+
+    @classmethod
+    async def has_permission(cls, user: edgy.Model, perm: str, obj: Any) -> bool:
+        """
+        Checks if a user has a specific permission on a given object.
+
+        Args:
+            user (edgy.Model): The user to check the permission for.
+            perm (str): The permission to check.
+            obj (Any): The object to check the permission on.
+        Returns:
+            bool: True if the user has the permission, False otherwise.
+        """
+        ctype = await get_content_type(obj)
+        filter_kwargs = {
+            f"{cls.__model_type__}__id__in": [user.id],
+            "codename": perm,
+            "content_type": ctype,
+        }
+        return await cls.query.filter(**filter_kwargs).exists()
 
 
 class BaseGroup(BaseUserGroup):

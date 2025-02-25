@@ -123,6 +123,12 @@ class PermissionManager(edgy.Manager):
         obj_perm = await self.model_permissions.assign_permission(**kwargs)
         return obj_perm
 
+    async def has_user_perm(self, user: edgy.Model, perm: str, obj: Any) -> bool:
+        """
+        Checks if user has any permissions for given object.
+        """
+        return await self.model_permissions.query.has_permission(user=user, perm=perm, obj=obj)
+
 
 class GroupManager(edgy.Manager):
     """
@@ -136,64 +142,3 @@ class GroupManager(edgy.Manager):
 
     async def get_by_natural_key(self, name: str) -> type[edgy.Model]:
         return await self.get(name=name)
-
-
-class BaseObjectPermissionManager(edgy.Manager):
-    @property
-    def model(self) -> type[edgy.Model]:
-        """
-        Returns the model class associated with this manager.
-
-        Returns:
-            type[edgy.Model]: The model class.
-        """
-
-        return self.model_class
-
-    @property
-    def user_or_group_field(self) -> str:
-        """
-        Determines whether the model class has a 'user' attribute or not.
-
-        Returns:
-            str: "user" if the model class has a 'user' attribute, otherwise "group".
-        """
-
-        try:
-            self.model_class.user  # noqa
-            return "user"
-        except AttributeError:
-            return "group"
-
-    async def assign_perm(self, perm: str, user_or_group: str, obj: Any) -> type[edgy.Model]:
-        """
-        Assigns permission with given `perm` for an instance `obj` and
-        `user`.
-        """
-        if getattr(obj, "pk", None) is None:
-            raise ObjectNotPersisted("Object %s needs to be persisted first" % obj)
-
-        ctype = await get_content_type(obj)
-        if not isinstance(perm, get_permission_model()):
-            permission, _ = await get_permission_model().query.get_or_create(
-                content_type=ctype, codename=perm, name=perm.capitalize()
-            )
-        else:
-            permission = perm
-
-        kwargs = {"permission": permission, self.user_or_group_field: user_or_group}
-        obj_perm, _ = await get_permission_model().query.get_or_create(**kwargs)
-        return obj_perm
-
-
-class UserObjectPermissionManager(BaseObjectPermissionManager):
-    """
-    Manager class for handling operations related to UserObjectPermission model.
-
-    Methods:
-    --------
-    assign_perm(perm: str, user: User, obj: Any) -> UserObjectPermission:
-        Asynchronously assigns a permission to a user for a specific object.
-    """
-
-    ...
