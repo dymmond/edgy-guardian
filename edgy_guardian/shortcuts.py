@@ -1,20 +1,14 @@
-from functools import lru_cache
-from typing import TYPE_CHECKING, Any
+from __future__ import annotations
 
-from edgy_guardian.utils import (
-    get_content_type_model,
-    get_groups_model,
-    get_permission_model,
-    get_user_model,
-)
+from typing import Any
 
-if TYPE_CHECKING:
-    from edgy_guardian.contenttypes.models import ContentType as BaseContentType
+import edgy
 
-User = get_user_model()
-Group = get_groups_model()
-ContentType = get_content_type_model()
-Permission = get_permission_model()
+from edgy_guardian.utils import get_permission_model
+
+
+async def has_user_perm(user: type[edgy.Model], perm: str, obj: Any) -> bool:
+    return await get_permission_model().query.has_user_perm(user, perm, obj)
 
 
 async def assign_perm(
@@ -47,10 +41,10 @@ async def assign_perm(
         # Revoke the 'delete' permission from a group globally
         await assign_perm('delete', group_instance, revoke=True)
     """
-    return await Permission.assign_permission(
-        users=user_or_group,
+    return await get_permission_model().query.assign_perm(
+        user_or_group=user_or_group,
         obj=obj,
-        name=perm,
+        perm=perm,
         revoke=revoke,
     )
 
@@ -85,36 +79,10 @@ async def bulk_assign_perm(
         # Revoke multiple permissions from a group globally
         await bulk_assign_perm(['delete', 'create'], group_instance, revoke=True)
     """
-    return await Permission.assign_permission(
+    return await get_permission_model().query.assign_perm(
         users=user_or_group,
         obj=obj,
         names=perms,
         bulk_create_or_update=True,
         revoke=revoke,
     )
-
-
-@lru_cache
-async def _get_content_type_cached(app_label: str, codename: str) -> "BaseContentType":
-    """
-    Retrieves and caches the content type for a given app label and codename.
-
-    This function uses an LRU (Least Recently Used) cache to store the content type
-    associated with the specified app label and codename. This can help improve
-    performance by avoiding repeated database queries for the same content type.
-
-    Args:
-        app_label (str): The label of the application to which the content type belongs.
-        codename (str): The codename of the content type.
-
-    Returns:
-        BaseContentType: The content type instance corresponding to the given app label and codename.
-
-    Raises:
-        ContentType.DoesNotExist: If no content type is found for the given app label and codename.
-
-    Example:
-        # Retrieve and cache the content type for the 'auth' app and 'user' model
-        content_type = await _get_content_type_cached('auth', 'user')
-    """
-    return await ContentType.query.get(app_label=app_label, model=codename)

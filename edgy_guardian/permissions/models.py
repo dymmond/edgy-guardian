@@ -1,19 +1,30 @@
+from __future__ import annotations
+
 import logging
 from typing import Any, ClassVar
 
 import edgy
 from sqlalchemy.exc import IntegrityError
 
-from edgy_guardian.permissions.managers import GroupManager, PermissionManager
-from edgy_guardian.utils import get_content_type_model, get_user_model
+from edgy_guardian.content_types.utils import get_content_type
+from edgy_guardian.enums import UserGroup
+from edgy_guardian.permissions.managers import (
+    GroupManager,
+    PermissionManager,
+)
+from edgy_guardian.utils import get_user_model
 
 logger = logging.getLogger(__name__)
 
-ContentType = get_content_type_model()
-User = get_user_model()
+
+class BaseUserGroup(edgy.Model):
+    __model_type__: ClassVar[str] = None
+
+    class Meta:
+        abstract = True
 
 
-class BasePermission(edgy.Model):
+class BasePermission(BaseUserGroup):
     """
     A model representing a permission.
 
@@ -27,27 +38,23 @@ class BasePermission(edgy.Model):
             Returns the string representation of the permission, which is the name.
     """
 
-    name: str = edgy.CharField(max_length=100)
+    __model_type__: ClassVar[str] = UserGroup.USER.value
+
+    name: str = edgy.CharField(max_length=100, null=True)
     content_type: edgy.Model = edgy.ForeignKey("ContentType", on_delete=edgy.CASCADE)
     codename: str = edgy.CharField(max_length=100)
 
-    query: ClassVar[edgy.Manager] = PermissionManager()
+    query: PermissionManager = PermissionManager()
 
     class Meta:
+        abstract = True
         unique_together = [("content_type", "codename")]
-        abstact = True
 
     def natural_key(self) -> tuple[str]:
         return (self.codename,) + self.content_type.natural_key()
 
     def __str__(self) -> str:
         return f"{self.content_type} | {self.name}"
-
-
-class Permission(BasePermission):
-    class Meta:
-        tablename = "edgy_guardian_permission"
-        unique_together = [("content_type", "codename")]
 
     @classmethod
     async def __bulk_create_or_update_permissions(
@@ -68,29 +75,38 @@ class Permission(BasePermission):
 
     @classmethod
     async def __assign_permission(
-        cls, users: list[edgy.Model], obj: edgy.Model, name: str, revoke: bool
+        cls, users: list[edgy.Model], obj: edgy.Model, revoke: bool
     ) -> None:
         """
-        Creates a permission for the given users and object.
+        Creates or revokes a permission for the given users and object.
         """
-        if not revoke:
-            try:
-                return await cls.query.create(users=users, obj=obj, name=name)
-            except IntegrityError as e:
-                logger.error("Error creating permission", error=str(e))
-            return None
+        model = getattr(obj, cls.__model_type__, None)
+        if not model:
+            logger.error(f"Model '{cls.__model_type__}' not found")
+            return
 
-        return await cls.query.filter(users__in=users, obj=obj, name=name).delete()
+        async def process_users(users, action):
+            if isinstance(users, list):
+                for user in users:
+                    await action(user)
+            else:
+                await action(users)
+
+        try:
+            if revoke:
+                await process_users(users, model.remove)
+            else:
+                await process_users(users, model.add)
+        except IntegrityError as e:
+            logger.error("Error processing permission", error=str(e))
 
     @classmethod
     async def assign_permission(
         cls,
         users: list[edgy.Model] | Any,
-        obj: edgy.Model,
-        name: str | None = None,
+        permission: "BasePermission",
+        user_or_groups: str,
         revoke: bool = False,
-        bulk_create_or_update: bool = False,
-        names: list[str] | None = None,
     ) -> None:
         """
         Assign or revoke permissions for a user or a list of users on a given object.
@@ -108,24 +124,37 @@ class Permission(BasePermission):
         Returns:
             None
         """
-        assert isinstance(users, list) or isinstance(users, User), (
+        assert isinstance(users, list) or isinstance(users, get_user_model()), (
             "Users must be a list or a User instance."
         )
 
         if not isinstance(users, list):
             users = [users]
 
-        if bulk_create_or_update and not names:
-            raise ValueError(
-                "You must provide a list of names to create or update permissions in bulk.",
-            )
-        elif bulk_create_or_update:
-            return await cls.__bulk_create_or_update_permissions(users, obj, names, revoke)
+        return await cls.__assign_permission(users, permission, revoke)
 
-        return await cls.__assign_permission(users, obj, name, revoke)
+    @classmethod
+    async def has_permission(cls, user: edgy.Model, perm: str, obj: Any) -> bool:
+        """
+        Checks if a user has a specific permission on a given object.
+
+        Args:
+            user (edgy.Model): The user to check the permission for.
+            perm (str): The permission to check.
+            obj (Any): The object to check the permission on.
+        Returns:
+            bool: True if the user has the permission, False otherwise.
+        """
+        ctype = await get_content_type(obj)
+        filter_kwargs = {
+            f"{cls.__model_type__}__id__in": [user.id],
+            "codename": perm,
+            "content_type": ctype,
+        }
+        return await cls.query.filter(**filter_kwargs).exists()
 
 
-class BaseGroup(edgy.Model):
+class BaseGroup(BaseUserGroup):
     """
     Represents a group of permissions.
 
@@ -137,13 +166,15 @@ class BaseGroup(edgy.Model):
         __str__() -> str: Returns the name of the group as its string representation.
     """
 
+    __model_type__: ClassVar[str] = UserGroup.GROUP.value
+
     name: str = edgy.CharField(max_length=100, unique=True)
-    permissions: list[Permission] = edgy.ManyToManyField(  # type: ignore
-        Permission,
+    permissions: list[BasePermission] = edgy.ManyToManyField(  # type: ignore
+        BasePermission,
         through_tablename=edgy.NEW_M2M_NAMING,
     )
 
-    query: ClassVar[edgy.Manager] = GroupManager()
+    query: ClassVar[GroupManager] = GroupManager()
 
     class Meta:
         abstract = True
@@ -155,51 +186,48 @@ class BaseGroup(edgy.Model):
         return self.name
 
 
-class Group(BaseGroup):
-    class Meta:
-        tablename = "edgy_guardian_groups"
+# class BaseObjectPermission(edgy.Model):
+#     """
+#     BaseObjectPermission is an abstract base model that defines a foreign key relationship
+#     to the Permission model. This class is intended to be inherited by other models that
+#     require object-level permissions.
+
+#     Attributes:
+#         permission (ForeignKey): A foreign key to the Permission model, with a cascade
+#                                  delete behavior.
+#     """
+
+#     permission: Permission = edgy.ForeignKey("Permission", on_delete=edgy.CASCADE)
+
+#     class Meta:
+#         abstract = True
+
+#     def __str__(self):
+#         value = str(getattr(self, "user", False) or self.group)
+#         return f"{value}", {str(self.permission.codename)}
 
 
-class BaseObjectPermission(edgy):
-    """
-    BaseObjectPermission is an abstract base model that defines a foreign key relationship
-    to the Permission model. This class is intended to be inherited by other models that
-    require object-level permissions.
+# class UserObjectPermissionBase(BaseObjectPermission):
+#     user = edgy.ForeignKey("User", on_delete=edgy.CASCADE)
 
-    Attributes:
-        permission (ForeignKey): A foreign key to the Permission model, with a cascade
-                                 delete behavior.
-    """
+#     query: ClassVar[UserObjectPermissionManager] = UserObjectPermissionManager()
 
-    permission: Permission = edgy.ForeignKey("Permission", on_delete=edgy.CASCADE)
-
-    class Meta:
-        abstract = True
-
-    def __str__(self):
-        value = str(getattr(self, "user", False) or self.group)
-        return f"{value}", {str(self.permission.codename)}
+#     class Meta:
+#         abstract = True
 
 
-class UserObjectPermissionBase(BaseObjectPermission):
-    user = edgy.ForeignKey("User", on_delete=edgy.CASCADE)
-
-    class Meta:
-        abstract = True
+# class UserObjectPermission(UserObjectPermissionBase):
+#     class Meta:
+#         unique_together = ["user", "permission"]
 
 
-class UserObjectPermission(UserObjectPermissionBase):
-    class Meta:
-        unique_together = ["user", "permission"]
+# class GroupObjectPermissionBase(BaseObjectPermission):
+#     group = edgy.ForeignKey(Group, on_delete=edgy.CASCADE)
+
+#     class Meta:
+#         abstract = True
 
 
-class GroupObjectPermissionBase(BaseObjectPermission):
-    group = edgy.ForeignKey(Group, on_delete=edgy.CASCADE)
-
-    class Meta:
-        abstract = True
-
-
-class GroupObjectPermission(GroupObjectPermissionBase):
-    class Meta:
-        unique_together = ["group", "permission"]
+# class GroupObjectPermission(GroupObjectPermissionBase):
+#     class Meta:
+#         unique_together = ["group", "permission"]

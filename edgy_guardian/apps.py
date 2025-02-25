@@ -1,19 +1,16 @@
+from __future__ import annotations
+
 import inspect
-from typing import TYPE_CHECKING
+from functools import lru_cache
+from typing import Any
 
 import edgy
 from edgy.conf import settings
 from edgy.utils.compat import is_class_and_subclass
 from pydantic import BaseModel
 
-from edgy_guardian._internal._module_loading import import_string
+from edgy_guardian._internal._module_loading import import_module, import_string
 from edgy_guardian.exceptions import GuardianImproperlyConfigured
-from edgy_guardian.utils import get_content_type_model
-
-if TYPE_CHECKING:
-    from edgy_guardian.contenttypes.models import ContentType as BaseContentType
-
-ContentType = get_content_type_model()
 
 
 class AppConfig(BaseModel):
@@ -26,11 +23,17 @@ class AppConfig(BaseModel):
 
     __app_models__: dict[str, type[edgy.Model]] = {}
 
-    def get_app_label(self) -> str:
+    def get_app_name(self) -> str:
         """
         Returns the name of the application.
         """
         return self.name
+
+    def get_app_label(self) -> str:
+        """
+        Returns the label of the application.
+        """
+        return getattr(self, "label", None)
 
     def get_verbose_name(self) -> str:
         """
@@ -38,37 +41,66 @@ class AppConfig(BaseModel):
         """
         return self.verbose_name
 
+    def __filter_model(self, condition: Any) -> edgy.Model:
+        return [value for key, value in self.__app_models__.items() if condition(key, value)]
+
     def get_model(self, name: str) -> type[edgy.Model]:
         """
         Returns the model from the application.
         """
+
+        def condition(key, value):
+            return value.meta.tablename == name
+
         try:
-            return self.__app_models__[name.capitalize()]
-        except KeyError:
+            return self.__filter_model(condition)[0]
+        except (KeyError, IndexError):
             raise GuardianImproperlyConfigured(
-                f"Model '{name}' is not configured in '{self.get_app_label()}'."
+                f"Model '{name}' is not configured in '{self.get_app_name()}'."
             ) from None
 
-    def get_models(self) -> list[type[edgy.Model]]:
+    def get_models(self) -> dict[str, type[edgy.Model]]:
         """
         Returns the models of the application.
         """
         try:
-            location = settings.edgy_guardian.models[self.name]
+            location = settings.edgy_guardian.models[self.name.lower()]
         except KeyError:
-            raise GuardianImproperlyConfigured(f"App '{self.name}' is not configured.") from None
+            raise GuardianImproperlyConfigured(
+                f"App '{self.name.lower()}' is not configured."
+            ) from None
 
         models: dict[str, type[edgy.Model]] = {}
-        module = import_string(location)
+        module = import_module(location)
 
         members = inspect.getmembers(
             module,
-            lambda attr: is_class_and_subclass(attr, edgy.Model)
+            lambda attr: hasattr(attr, "meta")
             and not attr.meta.abstract
+            and attr.meta.registry is not None
+            and attr.__name__ in settings.edgy_guardian.registry.models
             and not is_class_and_subclass(attr, edgy.ReflectModel),
         )
+
         for name, model in members:
             models[name] = model
+
+        # Making sure the M2M tables are also passed
+        members_mapping = dict(members)
+
+        # Filter the models that have the required fields
+        filtered_models = {
+            field.through.__name__: field.through
+            for _, model_class in settings.edgy_guardian.registry.models.items()
+            for _, field in model_class.meta.fields.items()
+            if (
+                hasattr(field, "through")
+                and not isinstance(field.to, str)
+                and field.to.__name__ in members_mapping
+                and field.through.__name__ not in members_mapping.values()
+            )
+        }
+        models.update(filtered_models)
         return models
 
 
@@ -85,8 +117,12 @@ class Apps:
     def __init__(self) -> None:
         self.guardian_apps: list[str] = settings.edgy_guardian.apps
         self.all_models: dict[str, type[edgy.Model]] = settings.edgy_guardian.registry.models
-        self.app_configs: dict[str, AppConfig] = {}
 
+        if self.all_models is None:
+            raise GuardianImproperlyConfigured(
+                "No models are registered in the registry. Did you run the `edgy_guardian.registry.register(registry)` function?",
+            )
+        self.app_configs: dict[str, AppConfig] = {}
         self.configure()
 
     def configure(self) -> None:
@@ -100,7 +136,7 @@ class Apps:
                 raise GuardianImproperlyConfigured(
                     f"There is already an app with the name '{app.name}'. Names must be unique."
                 )
-            self.app_configs[app.get_app_label()] = app
+            self.app_configs[app.get_app_name()] = app
             app.__app_models__ = app.get_models()
 
     def get_app_configs(self) -> dict[str, AppConfig]:
@@ -135,44 +171,6 @@ class Apps:
 apps = Apps()
 
 
-async def manage_content_types() -> None:
-    """
-    Manages the content types of the application.
-
-    This function is used to manage the content types of the application.
-    It creates the content types for all the models that are registered
-    with the application.
-
-    This function **must be run** before any other operation that
-    involves content types or permissions.
-
-    Usually, using a lifespan event is the best way to run this function.
-    """
-    from edgy_guardian.contenttypes.models import ContentType
-
-    # Gets all the existing content types already in the database
-    existing_content_types: list["BaseContentType"] = await ContentType.query.all()
-
-    # Deleted apps
-    deleted_apps: dict[str, str] = {}
-
-    # New apps
-    new_apps: dict[str, str] = {}
-
-    # Any possible deleted model
-    for ctype in existing_content_types:
-        if ctype.app_label not in apps.all_models:
-            deleted_apps[ctype.app_label] = ctype.model
-
-    # Making sure we get the new models to be added to the content types table
-    for name, model_class in apps.all_models.items():
-        if name not in deleted_apps:
-            new_apps[name] = model_class.meta.tablename
-
-    # Deleting the content types of the deleted apps
-    for app_label, model in deleted_apps.items():
-        await ContentType.query.filter(app_label=app_label, model=model).delete()
-
-    # Creating the content types of the new apps
-    for name, model in new_apps.items():
-        await ContentType.query.get_or_create(app_label=name, model=model)
+@lru_cache
+def get_apps() -> Apps:
+    return apps

@@ -1,10 +1,8 @@
+from __future__ import annotations
+
 from typing import Any
 
 import edgy
-
-from edgy_guardian.utils import get_content_type_model
-
-ContentType = get_content_type_model()
 
 
 class ContentTypeManager(edgy.Manager):
@@ -66,7 +64,7 @@ class ContentTypeManager(edgy.Manager):
         Returns:
             ContentType: The ContentType instance.
         """
-        return await self.get(model=model)
+        return await self.get(model=model.meta.tablename)
 
     async def get_for_id(self, id: Any) -> tuple[str, str]:
         """

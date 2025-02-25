@@ -1,13 +1,13 @@
+from __future__ import annotations
+
 from typing import Any
 
 import edgy
 
-from edgy_guardian.contenttypes.utils import get_content_type
+from edgy_guardian.content_types.utils import get_content_type
+from edgy_guardian.exceptions import GuardianImproperlyConfigured
 from edgy_guardian.permissions.exceptions import ObjectNotPersisted
-from edgy_guardian.utils import get_groups_model, get_permission_model
-
-Group = get_groups_model()
-Permission = get_permission_model()
+from edgy_guardian.utils import get_permission_model
 
 
 class PermissionManager(edgy.Manager):
@@ -35,31 +35,6 @@ class PermissionManager(edgy.Manager):
         The Permission object that matches the given natural key.
     """
 
-    async def get_by_natural_key(
-        self, codename: str, app_label: str, model: str
-    ) -> type[edgy.Model]:
-        return await self.get(
-            codename=codename,
-            content_type__app_label=app_label,
-            content_type__model=model,
-        )
-
-
-class GroupManager(edgy.Manager):
-    """
-    Manager class for handling operations related to Group model.
-
-    Methods:
-    --------
-    get_by_natural_key(name: str) -> Group:
-        Asynchronously retrieves a Group instance by its natural key (name).
-    """
-
-    async def get_by_natural_key(self, name: str) -> type[edgy.Model]:
-        return await self.get(name=name)
-
-
-class BaseObjectPermissionManager(edgy.Manager):
     @property
     def model(self) -> type[edgy.Model]:
         """
@@ -80,25 +55,92 @@ class BaseObjectPermissionManager(edgy.Manager):
             str: "user" if the model class has a 'user' attribute, otherwise "group".
         """
 
-        try:
-            self.model_class.user  # noqa
-            return "user"
-        except AttributeError:
-            return "group"
+        return self.model_class.__model_type__
 
-    async def assign_perm(self, perm: str, user_or_group: str, obj: Any) -> type[edgy.Model]:
+    @property
+    def model_permissions(self) -> type[edgy.Model]:
         """
-        Assigns permission with given `perm` for an instance `obj` and
-        `user`.
+        Returns the model class associated with this manager.
+
+        Returns:
+            type[edgy.Model]: The model class.
         """
+
+        return get_permission_model()
+
+    async def get_by_natural_key(
+        self, codename: str, app_label: str, model: str
+    ) -> type[edgy.Model]:
+        return await self.get(
+            codename=codename,
+            content_type__app_label=app_label,
+            content_type__model=model,
+        )
+
+    async def assign_perm(
+        self, perm: str, user_or_group: list[edgy.Model] | edgy.Model, obj: Any, revoke: bool
+    ) -> type[edgy.Model]:
+        """
+        Assigns or revokes a permission to a user or group for a specific object.
+        Args:
+            perm (str): The permission to assign or revoke.
+            user_or_group (list[edgy.Model] | edgy.Model): The user or group to which the permission is assigned or revoked.
+            obj (Any): The object for which the permission is assigned or revoked.
+            revoke (bool): If True, the permission will be revoked; if False, the permission will be assigned.
+        Returns:
+            type[edgy.Model]: The permission object that was assigned or revoked.
+        Raises:
+            GuardianImproperlyConfigured: If the user or group field does not exist or is not a ManyToManyField.
+            ObjectNotPersisted: If the object is not persisted.
+        """
+
+        if self.user_or_group_field not in self.model_permissions.meta.fields:
+            raise GuardianImproperlyConfigured(
+                f"You are trying to assign a permission to '{self.user_or_group_field}' and it does not exist. Edgy Guardian expects a field named '{self.user_or_group_field}' on the '{self.model_permissions.__name__}' model as 'ManyToManyField'."
+            )
+        elif not isinstance(
+            self.model_permissions.meta.fields[self.user_or_group_field], edgy.ManyToManyField
+        ):
+            raise GuardianImproperlyConfigured(
+                f"'{self.user_or_group_field}' must be a '{edgy.ManyToManyField.__name__}'."
+            )
+
         if getattr(obj, "pk", None) is None:
             raise ObjectNotPersisted("Object %s needs to be persisted first" % obj)
+
         ctype = await get_content_type(obj)
-        if not isinstance(perm, Permission):
-            permission = await Permission.query.get(content_type=ctype, codename=perm)
+        if not isinstance(perm, self.model_permissions):
+            permission, _ = await self.get_or_create(
+                content_type=ctype, codename=perm, name=perm.capitalize()
+            )
         else:
             permission = perm
 
-        kwargs = {"permission": permission, self.user_or_group_field: user_or_group}
-        obj_perm, _ = await self.get_or_create(**kwargs)
+        kwargs = {
+            "users": user_or_group,
+            "revoke": revoke,
+            "permission": permission,
+            "user_or_groups": self.user_or_group_field,
+        }
+        obj_perm = await self.model_permissions.assign_permission(**kwargs)
         return obj_perm
+
+    async def has_user_perm(self, user: edgy.Model, perm: str, obj: Any) -> bool:
+        """
+        Checks if user has any permissions for given object.
+        """
+        return await self.model_permissions.query.has_permission(user=user, perm=perm, obj=obj)
+
+
+class GroupManager(edgy.Manager):
+    """
+    Manager class for handling operations related to Group model.
+
+    Methods:
+    --------
+    get_by_natural_key(name: str) -> Group:
+        Asynchronously retrieves a Group instance by its natural key (name).
+    """
+
+    async def get_by_natural_key(self, name: str) -> type[edgy.Model]:
+        return await self.get(name=name)
