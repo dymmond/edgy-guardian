@@ -33,10 +33,10 @@ async def assign_perm(
         # Revoke the 'delete' permission from a group globally
         await assign_perm('delete', group_instance, revoke=True)
     """
-    return await get_permission_model().assign_permission(
-        users=user_or_group,
+    return await get_permission_model().query.assign_perm(
+        user_or_group=user_or_group,
         obj=obj,
-        name=perm,
+        perm=perm,
         revoke=revoke,
     )
 
@@ -71,7 +71,7 @@ async def bulk_assign_perm(
         # Revoke multiple permissions from a group globally
         await bulk_assign_perm(['delete', 'create'], group_instance, revoke=True)
     """
-    return await get_permission_model().assign_permission(
+    return await get_permission_model().query.assign_perm(
         users=user_or_group,
         obj=obj,
         names=perms,

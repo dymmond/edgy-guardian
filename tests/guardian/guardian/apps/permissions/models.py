@@ -1,19 +1,21 @@
 import edgy
 from esmerald.conf import settings
 
-from edgy_guardian.permissions.models import Group as BaseGroup, Permission as BasePermission
+from edgy_guardian.permissions.models import BasePermission
+
+# class Group(BaseGroup):
+#     users: list[edgy.Model] = edgy.ManyToManyField(
+#         "User", through_tablename=edgy.NEW_M2M_NAMING, related_name="groups"
+#     )
+
+#     class Meta:
+#         registry = settings.registry
 
 
-class BaseModel(edgy.Model):
-    class Meta:
-        registy = settings.registry
+class Permission(BasePermission):
+    users: list[edgy.Model] = edgy.ManyToManyField(
+        "User", through_tablename=edgy.NEW_M2M_NAMING, related_name="permissions"
+    )
 
-
-class Group(BaseModel, BaseGroup):
-    class Meta:
-        registry = settings.registry
-
-
-class Permission(BaseModel, BasePermission):
     class Meta:
         registry = settings.registry

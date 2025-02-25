@@ -126,4 +126,5 @@ class AbstractContentType(edgy.Model):
 
 class BaseContentType(AbstractContentType):
     class Meta:
+        abstract = True
         unique_together = [("app_label", "model")]

@@ -12,3 +12,14 @@ class DefaultEnum(str, Enum):
 
     def __repr__(self):
         return str(self)
+
+
+class UserGroup(str, Enum):
+    USER = "users"
+    GROUP = "groups"
+
+    def __str__(self) -> str:
+        return self.value
+
+    def __repr__(self):
+        return str(self)

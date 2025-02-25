@@ -36,7 +36,7 @@ classifiers = [
     "Topic :: Internet :: WWW/HTTP :: HTTP Servers",
     "Topic :: Internet :: WWW/HTTP",
 ]
-dependencies = ["edgy>=0.27.1,<1.0.0"]
+dependencies = ["edgy>=0.27.2,<1.0.0"]
 keywords = ["edgy_guardian"]
 
 [project.urls]
@@ -52,7 +52,7 @@ path = "edgy_guardian/__init__.py"
 
 [tool.hatch.envs.default]
 dependencies = [
-    "mypy==1.9.0",
+    "mypy==1.15.0",
     "ruff>=0.3.0,<5.0.0",
     "pre-commit>=3.3.1,<4.0.0",
     "devtools>=0.12.2",
