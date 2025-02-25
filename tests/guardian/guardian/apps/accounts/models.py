@@ -4,8 +4,10 @@ from typing import Any
 import edgy
 from esmerald.conf import settings
 
+from edgy_guardian.mixins import UserMixin
 
-class User(edgy.Model):
+
+class User(edgy.Model, UserMixin):
     """
     Base model used for a custom user of any application.
     """
