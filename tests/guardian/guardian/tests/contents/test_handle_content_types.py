@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import pytest
 from contenttypes.models import ContentType
 from edgy import Registry, settings

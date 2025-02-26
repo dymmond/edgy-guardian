@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from accounts.models import User
 from edgy.testing.factory import FactoryField, ModelFactory
 from items.models import Item

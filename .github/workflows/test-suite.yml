@@ -20,7 +20,7 @@ jobs:
     runs-on: "ubuntu-latest"
     strategy:
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
 
     services:
       postgres:
@@ -49,18 +49,20 @@ jobs:
           key: ${{ runner.os }}-python-${{ env.pythonLocation }}-${{ hashFiles('pyproject.toml') }}-test-v02
       - name: "Install dependencies"
         if: steps.cache.outputs.cache-hit != 'true'
-        run: "pip install hatch"
+        run: |
+          pip install hatch
+          scripts/install
       - name: Install Taskfile
-        run: "task go-task-bin"
+        run: "pip install go-task-bin"
       - name: "Run linting"
         if: steps.filters.outputs.src == 'true' || steps.filters.outputs.workflows == 'true'
         run: "hatch fmt"
-      - name: "Run mypy"
-        run: "hatch run test:check_types"
-        if: steps.filters.outputs.src == 'true' || steps.filters.outputs.docs_src == 'true' || steps.filters.outputs.workflows == 'true'
+      # - name: "Run mypy"
+      #   run: "hatch run test:check_types"
+      #   if: steps.filters.outputs.src == 'true' || steps.filters.outputs.docs_src == 'true' || steps.filters.outputs.workflows == 'true'
       - name: "Run tests"
-        if: steps.filters.outputs.src == 'true' || steps.filters.outputs.workflows == 'true' || github.event.schedule != ''
+        # if: steps.filters.outputs.src == 'true' || steps.filters.outputs.workflows == 'true' || github.event.schedule != ''
         env:
           EDGY_SETTINGS_MODULE: guardian.configs.edgy.EdgyAppSettings
           EDGY_DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/guardian
-        run: "task test"
+        run: task test

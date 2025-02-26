@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import pytest
 from accounts.models import User
 from permissions.models import Group, Permission
@@ -192,6 +194,10 @@ class TestPermission:
         has_permission = await has_user_perm(user=user_two, perm="create", obj=product)
 
         assert has_permission is True
+
+        has_permission = await has_user_perm(user=user, perm="create", obj=product)
+
+        assert has_permission is False
 
     async def test_user_does_not_have_permission(self, client):
         user = await UserFactory().build_and_save()
