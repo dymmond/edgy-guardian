@@ -1,16 +1,13 @@
 import pytest
 from accounts.models import User
-from edgy import Registry
-from esmerald.conf import settings
 from permissions.models import Permission
 
 from tests.factories import ItemFactory, ProductFactory, UserFactory
 
-models: Registry = settings.registry
 pytestmark = pytest.mark.anyio
 
 
-async def test_assign_permission_to_user():
+async def test_assign_permission_to_user(client):
     user = await UserFactory().build_and_save()
     item = await ItemFactory().build_and_save()
     product = await ProductFactory().build_and_save()
@@ -22,7 +19,7 @@ async def test_assign_permission_to_user():
     assert total_permissions == 2
 
 
-async def test_assign_same_permission_to_users():
+async def test_assign_same_permission_to_users(client):
     user = await UserFactory().build_and_save()
     user_two = await UserFactory().build_and_save()
     item = await ItemFactory().build_and_save()
@@ -43,7 +40,7 @@ async def test_assign_same_permission_to_users():
     assert len(total_users_in_permission) == 2
 
 
-async def test_assign_and_remove_permissions_to_users():
+async def test_assign_and_remove_permissions_to_users(client):
     user = await UserFactory().build_and_save()
     user_two = await UserFactory().build_and_save()
     item = await ItemFactory().build_and_save()
@@ -87,7 +84,7 @@ async def test_assign_and_remove_permissions_to_users():
     assert len(total_users_in_permission) == 1
 
 
-async def test_user_has_permission():
+async def test_user_has_permission(client):
     user = await UserFactory().build_and_save()
     user_two = await UserFactory().build_and_save()
     item = await ItemFactory().build_and_save()
@@ -112,7 +109,7 @@ async def test_user_has_permission():
     assert has_permission is True
 
 
-async def test_user_does_not_have_permission():
+async def test_user_does_not_have_permission(client):
     user = await UserFactory().build_and_save()
     user_two = await UserFactory().build_and_save()
     item = await ItemFactory().build_and_save()
@@ -131,7 +128,7 @@ async def test_user_does_not_have_permission():
     assert has_permission is False
 
 
-async def test_user_does_not_have_permission_then_it_added_and_it_does():
+async def test_user_does_not_have_permission_then_it_added_and_it_does(client):
     user = await UserFactory().build_and_save()
     user_two = await UserFactory().build_and_save()
     item = await ItemFactory().build_and_save()
