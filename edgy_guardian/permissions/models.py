@@ -12,7 +12,7 @@ from edgy_guardian.permissions.managers import (
     GroupManager,
     PermissionManager,
 )
-from edgy_guardian.utils import get_user_model
+from edgy_guardian.utils import get_groups_model, get_user_model
 
 logger = logging.getLogger(__name__)
 
@@ -167,10 +167,11 @@ class BaseGroup(BaseUserGroup):
 
     __model_type__: ClassVar[str] = UserGroup.GROUP.value
 
-    name: str = edgy.CharField(max_length=100, unique=True)
+    name: str = edgy.CharField(max_length=100, index=True)
     query: ClassVar[GroupManager] = GroupManager()
 
     class Meta:
+        unique_together = ["name"]
         abstract = True
 
     def natural_key(self) -> tuple[str]:
@@ -286,10 +287,9 @@ class BaseGroup(BaseUserGroup):
             >>> else:
             >>>     print("User does not have permission to edit the object.")
         """
-        ctype = await get_content_type(obj)
         filter_kwargs = {
             f"{UserGroup.USER}__id__in": [user.id],
-            "codename": perm,
-            "content_type": ctype,
+            "id": obj.id,
+            f"{UserGroup.PERMISSIONS}__codename": perm,
         }
-        return await cls.query.filter(**filter_kwargs).exists()
+        return await get_groups_model().query.filter(**filter_kwargs).exists()

@@ -5,6 +5,7 @@ from permissions.models import Group, Permission
 from edgy_guardian.shortcuts import (
     assign_group_perm,
     assign_perm,
+    has_group_permission,
     has_user_perm,
     remove_group_perm,
     remove_perm,
@@ -387,3 +388,27 @@ class TestGroupPermissions:
         total_users_in_permission = await total_permissions[0].users.all()
 
         assert len(total_users_in_permission) == 0
+
+    async def test_user_has_group_permission(self, client):
+        user = await UserFactory().build_and_save()
+        user_two = await UserFactory().build_and_save()
+        item = await ItemFactory().build_and_save()
+        product = await ProductFactory().build_and_save()
+
+        group = await assign_group_perm(
+            perm="create", users=[user, user_two], obj=item, group="admin"
+        )
+
+        group2 = await assign_group_perm(perm="create", users=[user], obj=product, group="users")
+
+        has_permission = await has_group_permission(user=user, perm="create", obj=group)
+
+        assert has_permission is True
+
+        has_permission = await has_group_permission(user=user_two, perm="create", obj=group)
+
+        assert has_permission is True
+
+        has_permission = await has_group_permission(user=user_two, perm="create", obj=group2)
+
+        assert has_permission is False
