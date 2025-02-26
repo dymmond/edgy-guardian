@@ -2,7 +2,13 @@ import pytest
 from accounts.models import User
 from permissions.models import Group, Permission
 
-from edgy_guardian.shortcuts import assign_group_perm, assign_perm, has_user_perm, remove_perm
+from edgy_guardian.shortcuts import (
+    assign_group_perm,
+    assign_perm,
+    has_user_perm,
+    remove_group_perm,
+    remove_perm,
+)
 from tests.factories import ItemFactory, ProductFactory, UserFactory
 
 pytestmark = pytest.mark.anyio
@@ -293,3 +299,91 @@ class TestGroupPermissions:
         total_users_in_group = await group.users.all()
 
         assert len(total_users_in_group) == 0
+
+    async def test_remove_user_from_groups_does_not_remove_from_permission(self, client):
+        user = await UserFactory().build_and_save()
+        item = await ItemFactory().build_and_save()
+
+        group = await assign_group_perm(perm="create", users=[user], obj=item, group="admin")
+
+        total_users_in_group = await group.users.all()
+
+        assert len(total_users_in_group) == 1
+
+        total_permissions = await Permission.query.all()
+
+        assert len(total_permissions) == 1
+
+        total_users_in_permission = await total_permissions[0].users.all()
+
+        assert len(total_users_in_permission) == 1
+
+        await group.users.remove(user)
+
+        total_users_in_group = await group.users.all()
+
+        assert len(total_users_in_group) == 0
+
+        total_users_in_permission = await total_permissions[0].users.all()
+
+        assert len(total_users_in_permission) == 1
+
+    async def test_remove_user_from_groups_does_not_remove_using_remove_group_perm(self, client):
+        user = await UserFactory().build_and_save()
+        item = await ItemFactory().build_and_save()
+
+        group = await assign_group_perm(perm="create", users=[user], obj=item, group="admin")
+
+        total_users_in_group = await group.users.all()
+
+        assert len(total_users_in_group) == 1
+
+        total_permissions = await Permission.query.all()
+
+        assert len(total_permissions) == 1
+
+        total_users_in_permission = await total_permissions[0].users.all()
+
+        assert len(total_users_in_permission) == 1
+
+        await remove_group_perm(perm="create", users=[user], obj=item, group="admin")
+
+        total_users_in_group = await group.users.all()
+
+        assert len(total_users_in_group) == 0
+
+        total_users_in_permission = await total_permissions[0].users.all()
+
+        assert len(total_users_in_permission) == 1
+
+    async def test_remove_user_from_groups_removes_user_from_permissions_remove_group_perm(
+        self, client
+    ):
+        user = await UserFactory().build_and_save()
+        item = await ItemFactory().build_and_save()
+
+        group = await assign_group_perm(perm="create", users=[user], obj=item, group="admin")
+
+        total_users_in_group = await group.users.all()
+
+        assert len(total_users_in_group) == 1
+
+        total_permissions = await Permission.query.all()
+
+        assert len(total_permissions) == 1
+
+        total_users_in_permission = await total_permissions[0].users.all()
+
+        assert len(total_users_in_permission) == 1
+
+        await remove_group_perm(
+            perm="create", users=[user], obj=item, group="admin", revoke_users_permissions=True
+        )
+
+        total_users_in_group = await group.users.all()
+
+        assert len(total_users_in_group) == 0
+
+        total_users_in_permission = await total_permissions[0].users.all()
+
+        assert len(total_users_in_permission) == 0
