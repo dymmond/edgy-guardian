@@ -28,11 +28,24 @@ While Edgy provides a robust permission system, it operates mainly at the model 
 
 Edgy Guardian fills this gap by introducing a flexible and efficient object-level permission system, inspired by the battle-tested Django Guardian.
 
+### Edgy Permissions
+
+Edgy also brings [native permissions](https://edgy.tarsild.io/permissions/intro/) and it can be used
+out of the box as well. The way it is done is slighly different from Edgy Guardian and aims something
+slighly different.
+
+!!! Warning
+    For now, Edgy Guardian only operates with normal primary keys (pk, id) and not with complex primary
+    keys offered by Edgy. 
+
+    The reason for this is to make sure 99% of the use cases are covered but this does not mean it
+    won't be supported in the future.
+
 ## Requirements
 
 To use Edgy Guardian, ensure your environment meets the following requirements:
 
-- **Python 3.9+** (Edgy Guardian leverages modern Python features that require version 3.9 or higher)
+- **Python 3.10+** (Edgy Guardian leverages modern Python features that require version 3.10 or higher)
 - **Edgy framework** (Ensure you have Edgy installed and configured in your project)
 
 ## Installation

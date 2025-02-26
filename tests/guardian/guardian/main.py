@@ -8,6 +8,8 @@ import sys
 
 from esmerald import Esmerald
 
+from edgy_guardian.loader import handle_content_types
+
 
 def build_path():
     """
@@ -29,8 +31,9 @@ def get_application():
     from edgy.conf import settings as edgy_settings
     from esmerald.conf import settings
 
-    # Initialise the registry
+    # Initialise the registry and pass it to `edgy_guardian`.
     edgy_settings.edgy_guardian.register(settings.registry)
+
     # ensure the settings are loaded
     monkay.evaluate_settings(
         ignore_preload_import_errors=False,
@@ -38,7 +41,10 @@ def get_application():
     )
 
     app = Esmerald(
-        on_startup=[settings.registry.__aenter__],
+        on_startup=[
+            settings.registry.__aenter__,
+            handle_content_types,
+        ],
         on_shutdown=[settings.registry.__aexit__],
     )
     monkay.set_instance(Instance(registry=app.settings.registry, app=app))
