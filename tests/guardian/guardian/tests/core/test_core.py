@@ -2,7 +2,7 @@ import pytest
 from accounts.models import User
 from permissions.models import Group, Permission
 
-from edgy_guardian.shortcuts import assign_group_perm, assign_perm, has_user_perm
+from edgy_guardian.shortcuts import assign_group_perm, assign_perm, has_user_perm, remove_perm
 from tests.factories import ItemFactory, ProductFactory, UserFactory
 
 pytestmark = pytest.mark.anyio
@@ -71,6 +71,88 @@ class TestPermission:
         # Remove Users
         await assign_perm(perm="create", users=[user], obj=item, revoke=True)
         await assign_perm(perm="create", users=[user_two], obj=product, revoke=True)
+
+        # Check total users in permission
+        total_users_in_permission = await perms[0].users.all()
+
+        assert len(total_users_in_permission) == 1
+
+        total_users_in_permission = await perms[1].users.all()
+
+        assert len(total_users_in_permission) == 1
+
+    async def test_assign_and_remove_permissions_to_users_with_remove_perm(self, client):
+        user = await UserFactory().build_and_save()
+        user_two = await UserFactory().build_and_save()
+        item = await ItemFactory().build_and_save()
+        product = await ProductFactory().build_and_save()
+
+        # Add Users
+        await assign_perm(perm="create", users=[user, user_two], obj=item)
+        await assign_perm(perm="create", users=[user, user_two], obj=product)
+
+        total_users = await User.query.all()
+
+        assert len(total_users) == 2
+
+        # Check total perms
+        perms = await Permission.query.all()
+
+        assert len(perms) == 2
+
+        # Check total users in permission
+        total_users_in_permission = await perms[0].users.all()
+
+        assert len(total_users_in_permission) == 2
+
+        total_users_in_permission = await perms[1].users.all()
+
+        assert len(total_users_in_permission) == 2
+
+        # Remove Users
+        await remove_perm(perm="create", users=[user], obj=item)
+        await remove_perm(perm="create", users=[user_two], obj=product)
+
+        # Check total users in permission
+        total_users_in_permission = await perms[0].users.all()
+
+        assert len(total_users_in_permission) == 1
+
+        total_users_in_permission = await perms[1].users.all()
+
+        assert len(total_users_in_permission) == 1
+
+    async def test_remove_perm(self, client):
+        user = await UserFactory().build_and_save()
+        user_two = await UserFactory().build_and_save()
+        item = await ItemFactory().build_and_save()
+        product = await ProductFactory().build_and_save()
+
+        # Add Users
+        await assign_perm(perm="create", users=[user, user_two], obj=item)
+        await assign_perm(perm="create", users=[user, user_two], obj=product)
+
+        total_users = await User.query.all()
+
+        assert len(total_users) == 2
+
+        # Check total perms
+        perms = await Permission.query.all()
+
+        assert len(perms) == 2
+
+        # Check total users in permission
+        total_users_in_permission = await perms[0].users.all()
+
+        assert len(total_users_in_permission) == 2
+
+        total_users_in_permission = await perms[1].users.all()
+
+        assert len(total_users_in_permission) == 2
+
+        # Remove Users
+        await remove_perm(perm="create", users=[user], obj=item)
+        await remove_perm(perm="create", users=[user_two], obj=product)
 
         # Check total users in permission
         total_users_in_permission = await perms[0].users.all()

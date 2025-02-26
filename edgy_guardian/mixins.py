@@ -2,11 +2,15 @@ from __future__ import annotations
 
 from typing import Any
 
+import edgy
+
 from edgy_guardian.shortcuts import (
     assign_group_perm,
     assign_perm,
     has_group_permission,
     has_user_perm,
+    remove_group_perm,
+    remove_perm,
 )
 
 
@@ -41,7 +45,9 @@ class UserMixin:
         """
         return await has_user_perm(self, perm, obj)
 
-    async def assign_perm(self, perm: str, obj: Any | None = None, revoke: bool = False) -> None:
+    async def assign_perm(
+        self, perm: str | type[edgy.Model], obj: Any | None = None, revoke: bool = False
+    ) -> None:
         """
         Assign or revoke the given permission for the user.
 
@@ -65,8 +71,8 @@ class UserMixin:
 
     async def assign_group_perm(
         self,
-        perm: str,
-        group: Any,
+        perm: str | type[edgy.Model],
+        group: Any | type[edgy.Model],
         obj: Any | None = None,
         revoke: bool = False,
         revoke_users_permissions: bool = False,
@@ -97,7 +103,7 @@ class UserMixin:
         """
         await assign_group_perm(perm, group, self, obj, revoke, revoke_users_permissions)
 
-    async def has_group_permission(self, perm: str, obj: Any) -> bool:
+    async def has_group_permission(self, perm: str | type[edgy.Model], obj: Any) -> bool:
         """
         Check if the user's group has the given permission on the given object.
 
@@ -120,3 +126,46 @@ class UserMixin:
             >>>     print("User's group does not have permission to edit the object.")
         """
         return await has_group_permission(self, perm, obj)
+
+    async def remove_perm(self, perm: str | type[edgy.Model], obj: Any | None = None) -> None:
+        """
+        Remove the specified permission from the user.
+
+        This asynchronous method removes the specified permission from the user.
+
+        Args:
+            perm (str): The permission to remove.
+            obj (Any, optional): The object to remove the permission from. Defaults to None.
+
+        Returns:
+            None
+
+        Example:
+            >>> await user.remove_perm('edit', some_object)
+        """
+        await remove_perm(perm, self, obj)
+
+    async def remove_group_perm(
+        self,
+        perm: str | type[edgy.Model],
+        group: str | type[edgy.Model],
+        obj: Any | None = None,
+        revoke_users_permissions: bool = False,
+    ) -> None:
+        """
+        Remove the specified permission from the user's group.
+
+        This asynchronous method removes the specified permission from the user's group.
+
+        Args:
+            perm (str): The permission to remove.
+            group (Any): The group to remove the permission from.
+            obj (Any, optional): The object to remove the permission from. Defaults to None.
+
+        Returns:
+            None
+
+        Example:
+            >>> await user.remove_group_perm('edit', group, some_object)
+        """
+        await remove_group_perm(perm, group, self, obj, revoke_users_permissions)
