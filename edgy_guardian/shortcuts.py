@@ -4,11 +4,65 @@ from typing import Any
 
 import edgy
 
-from edgy_guardian.utils import get_permission_model
+from edgy_guardian.utils import get_groups_model, get_permission_model
 
 
 async def has_user_perm(user: type[edgy.Model], perm: str, obj: Any) -> bool:
-    return await get_permission_model().query.has_user_perm(user, perm, obj)
+    """
+    Checks if a user has a specific permission for a given object.
+
+    This asynchronous function verifies whether the specified user has the
+    given permission for the provided object by querying the permissions
+    model.
+
+    Args:
+        user (type[edgy.Model]): The user for whom the permission check is
+            being performed.
+        perm (str): The permission string to check (e.g., 'view', 'edit').
+        obj (Any): The object for which the permission is being checked.
+
+    Returns:
+        bool: True if the user has the specified permission for the object,
+        False otherwise.
+
+    Example:
+        >>> has_permission = await has_user_perm(user, 'edit', some_object)
+        >>> if has_permission:
+        >>>     print("User has permission to edit the object.")
+        >>> else:
+        >>>     print("User does not have permission to edit the object.")
+    """
+    return await get_groups_model().query.has_user_perm(user, perm, obj)
+
+
+async def assign_perm_with_group(
+    perm: str,
+    user: type[edgy.Model],
+    group: type[edgy.Model],
+    obj: Any | None = None,
+    revoke: bool = False,
+) -> None:
+    """
+    Assign a permission to a user within a specific group, optionally for a specific object.
+
+    This function is an asynchronous operation that assigns a specified permission to a user within a given group.
+
+    It can also optionally assign the permission for a specific object.
+        perm (str): The permission to assign. This should be a string representing the permission codename.
+        user (type[edgy.Model]): The user to whom the permission will be assigned. This should be an instance of the user model.
+        group (type[edgy.Model]): The group within which the permission will be assigned. This should be an instance of the group model.
+
+    Args:
+        perm (str): The permission to assign.
+        user (type[edgy.Model]): The user to whom the permission will be assigned.
+        group (type[edgy.Model]): The group within which the permission will be assigned.
+        obj (Any | None, optional): The object for which the permission is assigned. Defaults to None.
+    Returns:
+        None
+    """
+    return await get_permission_model().query.assign_perm_with_group(
+        user=user, group=group, obj=obj, perm=perm, revoke=revoke
+    )
 
 
 async def assign_perm(

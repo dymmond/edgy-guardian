@@ -169,10 +169,11 @@ class BaseGroup(BaseUserGroup):
     __model_type__: ClassVar[str] = UserGroup.GROUP.value
 
     name: str = edgy.CharField(max_length=100, unique=True)
-    permissions: list[BasePermission] = edgy.ManyToManyField(  # type: ignore
-        BasePermission,
-        through_tablename=edgy.NEW_M2M_NAMING,
-    )
+    # permissions: list[BasePermission] = edgy.ManyToManyField(  # type: ignore
+    #     BasePermission,
+    #     through_tablename=edgy.NEW_M2M_NAMING,
+    #     related_name="groups",
+    # )
 
     query: ClassVar[GroupManager] = GroupManager()
 
@@ -184,50 +185,3 @@ class BaseGroup(BaseUserGroup):
 
     def __str__(self) -> str:
         return self.name
-
-
-# class BaseObjectPermission(edgy.Model):
-#     """
-#     BaseObjectPermission is an abstract base model that defines a foreign key relationship
-#     to the Permission model. This class is intended to be inherited by other models that
-#     require object-level permissions.
-
-#     Attributes:
-#         permission (ForeignKey): A foreign key to the Permission model, with a cascade
-#                                  delete behavior.
-#     """
-
-#     permission: Permission = edgy.ForeignKey("Permission", on_delete=edgy.CASCADE)
-
-#     class Meta:
-#         abstract = True
-
-#     def __str__(self):
-#         value = str(getattr(self, "user", False) or self.group)
-#         return f"{value}", {str(self.permission.codename)}
-
-
-# class UserObjectPermissionBase(BaseObjectPermission):
-#     user = edgy.ForeignKey("User", on_delete=edgy.CASCADE)
-
-#     query: ClassVar[UserObjectPermissionManager] = UserObjectPermissionManager()
-
-#     class Meta:
-#         abstract = True
-
-
-# class UserObjectPermission(UserObjectPermissionBase):
-#     class Meta:
-#         unique_together = ["user", "permission"]
-
-
-# class GroupObjectPermissionBase(BaseObjectPermission):
-#     group = edgy.ForeignKey(Group, on_delete=edgy.CASCADE)
-
-#     class Meta:
-#         abstract = True
-
-
-# class GroupObjectPermission(GroupObjectPermissionBase):
-#     class Meta:
-#         unique_together = ["group", "permission"]
