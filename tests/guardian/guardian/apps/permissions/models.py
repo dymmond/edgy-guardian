@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import edgy
 from esmerald.conf import settings
 
