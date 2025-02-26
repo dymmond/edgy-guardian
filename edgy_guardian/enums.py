@@ -19,6 +19,7 @@ class DefaultEnum(str, Enum):
 class UserGroup(str, Enum):
     USER = "users"
     GROUP = "groups"
+    PERMISSIONS = "permissions"
 
     def __str__(self) -> str:
         return self.value

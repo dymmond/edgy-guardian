@@ -105,7 +105,6 @@ class BasePermission(BaseUserGroup):
         cls,
         users: list[edgy.Model] | Any,
         permission: "BasePermission",
-        user_or_groups: str,
         revoke: bool = False,
     ) -> None:
         """
@@ -169,12 +168,6 @@ class BaseGroup(BaseUserGroup):
     __model_type__: ClassVar[str] = UserGroup.GROUP.value
 
     name: str = edgy.CharField(max_length=100, unique=True)
-    # permissions: list[BasePermission] = edgy.ManyToManyField(  # type: ignore
-    #     BasePermission,
-    #     through_tablename=edgy.NEW_M2M_NAMING,
-    #     related_name="groups",
-    # )
-
     query: ClassVar[GroupManager] = GroupManager()
 
     class Meta:
@@ -185,3 +178,118 @@ class BaseGroup(BaseUserGroup):
 
     def __str__(self) -> str:
         return self.name
+
+    @classmethod
+    async def __assign_users(cls, users: list[edgy.Model], obj: edgy.Model, revoke: bool) -> None:
+        model = getattr(obj, UserGroup.USER, None)
+        if not model:
+            logger.error(f"Model '{cls.__model_type__}' not found")
+            return
+
+        async def process_users(users, action):
+            if isinstance(users, list):
+                for user in users:
+                    await action(user)
+            else:
+                await action(users)
+
+        try:
+            if revoke:
+                await process_users(users, model.remove)
+            else:
+                await process_users(users, model.add)
+        except IntegrityError as e:
+            logger.error("Error processing permission", error=str(e))
+
+    @classmethod
+    async def assign_group_perm(
+        cls,
+        users: list[edgy.Model] | edgy.Model,
+        permission: type["BasePermission"],
+        group: type[edgy.Model] | str,
+        revoke: bool = False,
+    ) -> None:
+        """
+        Assign or revoke a permission for a group.
+
+        This asynchronous class method assigns or revokes a specified permission
+        for a given group. If the `revoke` parameter is set to True, the
+        permission will be revoked from the group.
+
+        Args:
+            permission (type["BasePermission"]): The permission to assign or revoke.
+            group (type[edgy.Model] | str): The group to which the permission will
+                be assigned or from which it will be revoked. This can be an
+                instance of the group model or the name of the group.
+            revoke (bool, optional): If set to True, the permission will be revoked
+                from the group. Defaults to False.
+
+        Returns:
+            None
+
+        Raises:
+            GuardianImproperlyConfigured: If the group is not an instance of the
+                group model and cannot be retrieved or created.
+
+        Example:
+            >>> await cls.assign_group_perm(permission, group)
+            >>> await cls.assign_group_perm(permission, "admin", revoke=True)
+        """
+        # Assigns the users
+        assert isinstance(users, list) or isinstance(users, get_user_model()), (
+            "Users must be a list or a User instance."
+        )
+
+        if not isinstance(users, list):
+            users = [users]
+
+        # Handles the content type for group assignment
+        if not isinstance(group, cls):
+            group_obj, _ = await cls.query.get_or_create(name=group)
+        else:
+            group_obj = group
+
+        # Assign/Revoke the users from the group
+        await cls.__assign_users(users, group_obj, revoke)
+
+        # Get the permission object from the group model
+        permissions = getattr(group_obj, UserGroup.PERMISSIONS)
+        if not revoke:
+            await permissions.add(permission)
+        else:
+            await permissions.remove(permission)
+
+        return group_obj
+
+    @classmethod
+    async def has_group_permission(cls, user: edgy.Model, perm: str, obj: Any) -> bool:
+        """
+        Checks if a user has a specific permission on a given object.
+
+        This asynchronous class method verifies whether the specified user has
+        the given permission for the provided object by querying the permissions
+        model.
+
+        Args:
+            user (edgy.Model): The user to check the permission for.
+            perm (str): The permission to check.
+            obj (Any): The object to check the permission on.
+
+        Returns:
+            bool: True if the user has the specified permission on the object,
+            False otherwise.
+
+        Example:
+            >>> has_permission = await cls.has_group_permission(user, 'edit', some_object)
+            >>> if has_permission:
+            >>>     print("User has permission to edit the object.")
+            >>> else:
+            >>>     print("User does not have permission to edit the object.")
+        """
+        ctype = await get_content_type(obj)
+        filter_kwargs = {
+            f"{UserGroup.USER}__id__in": [user.id],
+            "codename": perm,
+            "content_type": ctype,
+        }
+        return await cls.query.filter(**filter_kwargs).exists()
