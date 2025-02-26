@@ -33,7 +33,7 @@ theme:
     - content.code.select
     - navigation.indexes
     - navigation.path
-    - navigation.tabs
+    # - navigation.tabs
 
 repo_name: dymmond/edgy-guardian
 repo_url: https://github.com/dymmond/edgy-guardian
@@ -70,7 +70,7 @@ plugins:
 
 nav:
   - Introduction: "index.md"
-  - Mixin: "mixins.md"
+  - Mixins: "mixins.md"
   - Shortcuts: "shortcuts.md"
   - Contributing: "contributing.md"
   - Sponsorship: "sponsorship.md"
