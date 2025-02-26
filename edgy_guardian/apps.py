@@ -95,8 +95,7 @@ class AppConfig(BaseModel):
             for _, field in model_class.meta.fields.items()
             if (
                 hasattr(field, "through")
-                and not isinstance(field.to, str)
-                and field.to.__name__ in members_mapping
+                and field.target.__name__ in members_mapping
                 and field.through.__name__ not in members_mapping.values()
             )
         }

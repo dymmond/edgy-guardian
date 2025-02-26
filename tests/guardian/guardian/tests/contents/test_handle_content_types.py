@@ -1,13 +1,13 @@
 import pytest
 from contenttypes.models import ContentType
-from edgy import Registry
+from edgy import Registry, settings
 from edgy.conf import settings as edgy_settings
-from esmerald.conf import settings
 
 from edgy_guardian.loader import handle_content_types
 
-models: Registry = settings.registry
 pytestmark = pytest.mark.anyio
+
+models = settings.edgy_guardian.registry
 
 
 async def test_handle_content_types_generate_content_types(client):
@@ -34,3 +34,6 @@ async def test_handle_content_types_when_tables_are_removed_from_registry(client
     total = await ContentType.query.all()
 
     assert len(total) == 2
+
+    # Rollback to original registry
+    edgy_settings.edgy_guardian.register(models)
