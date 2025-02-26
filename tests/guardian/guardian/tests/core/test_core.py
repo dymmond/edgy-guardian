@@ -233,6 +233,24 @@ class TestPermission:
 
         assert has_permission is True
 
+    async def test_remove_user_remove_automatically_from_permissions(self, client):
+        user = await UserFactory().build_and_save()
+        item = await ItemFactory().build_and_save()
+
+        await assign_perm(perm="create", users=[user], obj=item)
+
+        permission = await Permission.query.first()
+        total_users_in_permission = await permission.users.all()
+
+        assert len(total_users_in_permission) == 1
+
+        await user.delete()
+
+        permission = await Permission.query.first()
+        total_users_in_permission = await permission.users.all()
+
+        assert len(total_users_in_permission) == 0
+
 
 class TestGroupPermissions:
     async def test_assign_group_permission(self, client):
@@ -259,3 +277,19 @@ class TestGroupPermissions:
         total_users_in_permission = await total_permissions[0].users.all()
 
         assert len(total_users_in_permission) == 2
+
+    async def test_remove_user_removes_automatically_from_groups(self, client):
+        user = await UserFactory().build_and_save()
+        item = await ItemFactory().build_and_save()
+
+        group = await assign_group_perm(perm="create", users=[user], obj=item, group="admin")
+
+        total_users_in_group = await group.users.all()
+
+        assert len(total_users_in_group) == 1
+
+        await user.delete()
+
+        total_users_in_group = await group.users.all()
+
+        assert len(total_users_in_group) == 0
