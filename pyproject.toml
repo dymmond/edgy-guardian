@@ -100,7 +100,7 @@ build = "mkdocs build"
 serve = "mkdocs serve --dev-addr localhost:8000"
 
 [tool.hatch.envs.test]
-dependencies = ["edgy_guardian[testing]"]
+features = ["testing"]
 
 [tool.hatch.envs.test.scripts]
 # needs docker services running
