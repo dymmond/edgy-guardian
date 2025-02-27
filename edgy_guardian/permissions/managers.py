@@ -123,30 +123,6 @@ class ManagerMixin:
 
 
 class PermissionManager(edgy.Manager, ManagerMixin):
-    """
-    Manager class for handling Permission objects.
-
-    Methods
-    -------
-    get_by_natural_key(codename: str, app_label: str, model: str) -> "Permission"
-        Asynchronously retrieves a Permission object based on its natural key.
-    Asynchronously retrieves a Permission object based on its natural key.
-
-    Parameters
-    ----------
-    codename : str
-        The codename of the permission.
-    app_label : str
-        The app label associated with the permission.
-    model : str
-        The model associated with the permission.
-    Returns
-    -------
-
-    Permission
-        The Permission object that matches the given natural key.
-    """
-
     @property
     def model(self) -> type[edgy.Model]:
         """
@@ -159,15 +135,6 @@ class PermissionManager(edgy.Manager, ManagerMixin):
             type[edgy.Model]: The model class associated with this manager.
         """
         return self.model_class
-
-    async def get_by_natural_key(
-        self, codename: str, app_label: str, model: str
-    ) -> type[edgy.Model]:
-        return await self.get(
-            codename=codename,
-            content_type__app_label=app_label,
-            content_type__model=model,
-        )
 
     async def assign_perm(
         self,
@@ -204,7 +171,7 @@ class PermissionManager(edgy.Manager, ManagerMixin):
         ctype = await get_content_type(obj)
         if not isinstance(perm, self.permissions_model):
             permission, _ = await self.get_or_create(
-                content_type=ctype, codename=perm, name=perm.capitalize()
+                content_type=ctype, codename=perm.lower(), name=perm.capitalize()
             )
         else:
             permission = perm
@@ -225,18 +192,6 @@ class PermissionManager(edgy.Manager, ManagerMixin):
 
 
 class GroupManager(edgy.Manager, ManagerMixin):
-    """
-    Manager class for handling operations related to Group model.
-
-    Methods:
-    --------
-    get_by_natural_key(name: str) -> Group:
-        Asynchronously retrieves a Group instance by its natural key (name).
-    """
-
-    async def get_by_natural_key(self, name: str) -> type[edgy.Model]:
-        return await self.get(name=name)
-
     def __check_many_to_many_field(self, model: edgy.Model, field_name: str) -> None:
         """
         Checks if the specified field in the given model is a ManyToManyField.
@@ -292,7 +247,7 @@ class GroupManager(edgy.Manager, ManagerMixin):
         ctype = await get_content_type(obj)
         if not isinstance(perm, self.permissions_model):
             permission, _ = await self.permissions_model.query.get_or_create(
-                content_type=ctype, codename=perm, name=perm.capitalize()
+                content_type=ctype, codename=perm.lower(), name=perm.capitalize()
             )
         else:
             permission = perm

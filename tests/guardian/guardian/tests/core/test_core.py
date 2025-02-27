@@ -96,6 +96,9 @@ class TestPermission:
         item = await ItemFactory().build_and_save()
         product = await ProductFactory().build_and_save()
 
+        # Making sure it does not blow if does not exist
+        await remove_perm(perm="create", users=[user], obj=item)
+
         # Add Users
         await assign_perm(perm="create", users=[user, user_two], obj=item)
         await assign_perm(perm="create", users=[user, user_two], obj=product)
@@ -339,6 +342,10 @@ class TestGroupPermissions:
         user = await UserFactory().build_and_save()
         item = await ItemFactory().build_and_save()
 
+        # Making sure it does not blow if does not exist
+        await remove_group_perm(perm="create", users=[user], obj=item, group="admin")
+
+        # Add Users
         group = await assign_group_perm(perm="create", users=[user], obj=item, group="admin")
 
         total_users_in_group = await group.users.all()

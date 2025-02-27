@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 import edgy
+from edgy.exceptions import RelationshipNotFound
 
 from edgy_guardian.utils import get_groups_model, get_permission_model
 
@@ -70,7 +71,7 @@ async def assign_group_perm(
     obj: Any | None = None,
     revoke: bool = False,
     revoke_users_permissions: bool = False,
-) -> None:
+) -> Any:
     """
     Assign or revoke a permission to/from a group, optionally for specific users and/or an object.
 
@@ -109,7 +110,7 @@ async def assign_group_perm(
 
 async def assign_perm(
     perm: type[edgy.Model] | str, users: Any, obj: Any | None = None, revoke: bool = False
-) -> None:
+) -> Any:
     """
     Assigns or revokes a permission for a user or group on a specific object.
 
@@ -168,7 +169,10 @@ async def remove_perm(perm: type[edgy.Model] | str, users: Any, obj: Any | None 
         # Revoke the 'delete' permission from a group globally
         await remove_perm('delete', group_instance)
     """
-    return await assign_perm(perm, users, obj, revoke=True)
+    try:
+        return await assign_perm(perm, users, obj, revoke=True)
+    except RelationshipNotFound:
+        return None
 
 
 async def remove_group_perm(
@@ -203,11 +207,14 @@ async def remove_group_perm(
         # Revoke the 'view' permission from a group and also from the users within the group
         await remove_group_perm('view', group_instance, revoke_users_permissions=True)
     """
-    return await assign_group_perm(
-        perm=perm,
-        group=group,
-        users=users,
-        obj=obj,
-        revoke=True,
-        revoke_users_permissions=revoke_users_permissions,
-    )
+    try:
+        return await assign_group_perm(
+            perm=perm,
+            group=group,
+            users=users,
+            obj=obj,
+            revoke=True,
+            revoke_users_permissions=revoke_users_permissions,
+        )
+    except RelationshipNotFound:
+        return None
