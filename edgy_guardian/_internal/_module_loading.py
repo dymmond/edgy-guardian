@@ -1,10 +1,7 @@
 from __future__ import annotations
 
 from importlib import import_module
-from typing import TYPE_CHECKING, Any
-
-if TYPE_CHECKING:
-    from edgy import Registry
+from typing import Any
 
 
 def import_string(dotted_path: str) -> Any:
@@ -25,5 +22,3 @@ def import_string(dotted_path: str) -> Any:
         raise ImportError(
             f'Module "{module_path}" does not define a "{class_name}" attribute/class'
         ) from err
-
-
