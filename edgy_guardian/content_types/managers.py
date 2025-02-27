@@ -10,7 +10,7 @@ class ContentTypeManager(edgy.Manager):
         super().__init__(*args, **kwargs)
         self._cache = {}
 
-    async def get_for_model(self, model: str) -> type[edgy.Model]:
+    async def get_for_model(self, model: str | type[edgy.Model]) -> type[edgy.Model]:
         """
         Retrieve the ContentType instance for the given model name.
 
@@ -19,6 +19,8 @@ class ContentTypeManager(edgy.Manager):
         Returns:
             ContentType: The ContentType instance.
         """
+        if isinstance(model, edgy.Model):
+            return await self.get(model=model.meta.tablename)
         return await self.get(model=model)
 
     async def get_for_id(self, id: Any) -> tuple[str, str]:
