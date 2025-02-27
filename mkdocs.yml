@@ -72,6 +72,7 @@ nav:
   - Installation: "index.md"
   - Mixins: "mixins.md"
   - Shortcuts: "shortcuts.md"
+  - Utilities: "utils.md"
   - Tutorial: "tutorial.md"
   - Contributing: "contributing.md"
   - Sponsorship: "sponsorship.md"

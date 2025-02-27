@@ -47,7 +47,7 @@ class UserMixin:
 
     async def assign_perm(
         self, perm: str | type[edgy.Model], obj: Any | None = None, revoke: bool = False
-    ) -> None:
+    ) -> Any:
         """
         Assign or revoke the given permission for the user.
 
@@ -76,7 +76,7 @@ class UserMixin:
         obj: Any | None = None,
         revoke: bool = False,
         revoke_users_permissions: bool = False,
-    ) -> None:
+    ) -> Any:
         """
         Assign or revoke the given permission for the user's group.
 

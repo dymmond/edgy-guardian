@@ -15,7 +15,7 @@ from edgy_guardian.loader import handle_content_types
 @asynccontextmanager
 async def lifespan(app: Esmerald):
     async with settings.registry:
-        handle_content_types()
+        await handle_content_types()
         yield
 
 
