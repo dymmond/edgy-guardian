@@ -50,9 +50,6 @@ class BasePermission(BaseUserGroup):
         abstract = True
         unique_together = [("content_type", "codename")]
 
-    def natural_key(self) -> tuple[str]:
-        return (self.codename,) + self.content_type.natural_key()
-
     def __str__(self) -> str:
         return f"{self.content_type} | {self.name}"
 
@@ -173,9 +170,6 @@ class BaseGroup(BaseUserGroup):
     class Meta:
         unique_together = ["name"]
         abstract = True
-
-    def natural_key(self) -> tuple[str]:
-        return (self.name,)
 
     def __str__(self) -> str:
         return self.name

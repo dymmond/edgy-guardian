@@ -94,17 +94,6 @@ class AbstractContentType(edgy.Model):
 
         return await self.model_class().query.filter(**kwargs)
 
-    def natural_key(self) -> tuple[str, str]:
-        """
-        Returns a tuple representing the natural key for the content type.
-        The natural key is a tuple containing the app label and the model name.
-
-        Returns:
-            tuple[str, str]: A tuple containing the app label and the model name.
-        """
-
-        return (self.app_label, self.model)
-
     @classmethod
     async def configure(cls) -> bool:
         """
