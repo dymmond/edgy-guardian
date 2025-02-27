@@ -16,13 +16,99 @@ A group is a collection of users that share common permissions. By assigning per
 
 A content type represents the type of object or resource for which permissions are being managed. For example, in a content management system, content types might include articles, images, and videos. Managing permissions at the content type level allows for fine-grained access control.
 
-## Functions
+## Available shortcuts
+
+Edgy Guardian comes with batteries included, this means, comes with ready to use `shortcuts` to speed up
+your development process without thinking too much.
+
+!!! Warning
+    If you skiped the [quickstart](index.md#how-to-use-edgy-guardian), now it will be a good time to go there and revisit it.
+
+Assuming that you read the [installation](./index.md) section and understood how you should assemble the Edgy Guardian,
+now it is the time to make sure you can use all of those cool functionalities that we want so much.
+
+Whem implementing the `ContentType`, `Permission` and `Group` model, a lot of magic happens behind the scenes and the
+purpose of using the library is to simplify your life as much as possible in the long-run development process.
+
+To be able o use the shortcuts, those can be imported from `edgy_guardian.shortcuts`.
+
+### `assign_perm`
+
+Now this one is a beauty. So simple and yet so powerful.
+
+This function allows you, as the name suggests, to assign a permission to a user but also allows you
+to revoke it, all in one.
+
+```python
+from edgy_guardian.shortcuts import assign_perm
+```
+
+#### Signature
+
+```python
+async def assign_perm(perm: str, users: Any, obj: Any | None = None, revoke: bool = False) -> Any:
+```
+
+#### Parameters
+
+- **`perm`**: The permission to assign or revoke. This should be a string representing the permission name.
+- **`users`**: The user or group to assign or revoke the permission for. This can be an instance or list of a users.
+- **`obj`**: The object to assign or revoke the permission for. This can be any object for which permissions are managed. Defaults to None, meaning the permission is assigned or revoked globally.
+- **`revoke`**: If True, the permission will be revoked instead of assigned. Defaults to False.
+
+#### Example
+
+```python
+# Assign the 'edit' permission to a user for a specific object
+await assign_perm('edit', user_instance, obj=some_object)
+
+# Revoke the 'delete' permission from a user
+await assign_perm('delete', user_instance, obj=some_object, revoke=True)
+```
+
+### `remove_perm`
+
+This does the exact opposite of the [assign_perm](#assign_perm). Instead of assigning a permission
+to a user, it removes it.
+
+```python
+from edgy_guardian.shortcuts import remove_perm
+```
+
+#### Signature
+
+```python
+async def remove_perm(perm: str, users: Any, obj: Any | None = None, revoke: bool = False) -> None:
+```
+
+#### Parameters
+
+- **`perm`**: The permission to revoke. This should be a string representing the permission name.
+- **`users`**: The user or group to revoke the permission for. This can be an instance or list of a users.
+- **`obj`**: The object to revoke the permission for. This can be any object for which permissions are managed. 
+
+#### Example
+
+```python
+await remove_perm('edit', user_instance, obj=some_object)
+```
+
+This can be also achieved with [assign_perm](#assign_perm) by passing the `revoke=True` flag.
+
+```python
+await assign_perm('delete', user_instance, obj=some_object, revoke=True)
+```
 
 ### `has_user_perm`
 
-#### Description
+This is another out of the box functionality that can be very handy to check if a `user` has a specific permission for a given object.
 
-Checks if a user has a specific permission for a given object.
+This asynchronous function verifies whether the specified user has the given permission for the provided object by querying the permissions
+model.
+
+```python
+from edgy_guardian.shortcuts import has_user_perm
+```
 
 #### Signature
 
@@ -32,13 +118,9 @@ async def has_user_perm(user: type[edgy.Model], perm: str, obj: Any) -> bool:
 
 #### Parameters
 
-- `user` (type[edgy.Model]): The user for whom the permission check is being performed.
-- `perm` (str): The permission string to check (e.g., 'view', 'edit').
-- `obj` (Any): The object for which the permission is being checked.
-
-#### Returns
-
-- `bool`: True if the user has the specified permission for the object, False otherwise.
+- **`user`**: The user for whom the permission check is being performed.
+- **`perm`**: The permission string to check (E.g.: 'view', 'edit').
+- **`obj`**: The object for which the permission is being checked.
 
 #### Example
 
@@ -51,44 +133,20 @@ else:
     print("User does not have permission to edit the object.")
 ```
 
-### `has_group_permission`
-
-#### Description
-
-Checks if a user has a specific permission for a given object.
-
-#### Signature
-
-```python
-async def has_group_permission(user: type[edgy.Model], perm: str, obj: Any) -> bool:
-```
-
-#### Parameters
-
-- `user` (type[edgy.Model]): The user for whom the permission check is being performed.
-- `perm` (str): The permission string to check (e.g., 'view', 'edit').
-- `obj` (Any): The object for which the permission is being checked.
-
-#### Returns
-
-- `bool`: True if the user has the specified permission for the object, False otherwise.
-
-#### Example
-
-```python
-has_permission = await has_group_permission(user, 'edit', some_object)
-
-if has_permission:
-    print("User has permission to edit the object.")
-else:
-    print("User does not have permission to edit the object.")
-```
-
 ### `assign_group_perm`
 
-#### Description
+Assign or revoke a permission to/from a group, optionally for specific users and/or an object.
 
-Assigns or revokes a permission to/from a group, optionally for specific users and/or an object.
+This asynchronous function assigns a specified permission to a group. It can also optionally assign the
+permission for specific users within the group and/or for a specific object. 
+
+If the `revoke` parameter is set to True, the permission will be revoked from the group.
+
+To also revoke the permission from the users within the group, set `revoke_users_permissions` to True.
+
+```python
+from edgy_guardian.shortcuts import assign_group_perm
+```
 
 #### Signature
 
@@ -100,21 +158,17 @@ async def assign_group_perm(
     obj: Any | None = None,
     revoke: bool = False,
     revoke_users_permissions: bool = False,
-) -> None:
+) -> Any:
 ```
 
 #### Parameters
 
-- `perm` (str): The permission to assign or revoke. This should be a string representing the permission codename.
-- `group` (type[edgy.Model]): The group to which the permission will be assigned or from which it will be revoked.
-- `users` (type[edgy.Model] | None, optional): The users within the group for whom the permission will be assigned or revoked. Defaults to None.
-- `obj` (Any | None, optional): The object for which the permission is assigned or revoked. Defaults to None.
-- `revoke` (bool, optional): If set to True, the permission will be revoked from the group. Defaults to False.
-- `revoke_users_permissions` (bool, optional): If set to True, the permission will also be revoked from the users within the group. Defaults to False.
-
-#### Returns
-
-- `None`
+- **`perm`**: The permission to assign or revoke. This should be a string representing the permission codename.
+- **`group`**: The group to which the permission will be assigned or from which it will be revoked.
+- **`users`**: The users within the group for whom the permission will be assigned or revoked. Defaults to None.
+- **`obj`**: The object for which the permission is assigned or revoked. Defaults to None.
+- **`revoke`**: If set to True, the permission will be revoked from the group. Defaults to False.
+- **`revoke_users_permissions`**: If set to True, the permission will also be revoked from the users within the group. Defaults to False.
 
 #### Example
 
@@ -124,37 +178,72 @@ await assign_group_perm('view', group, revoke=True)
 await assign_group_perm('delete', group, revoke=True, revoke_users_permissions=True)
 ```
 
-### `assign_perm`
+### `remove_group_perm`
 
-#### Description
+This does the opposite of [assign_group_perm](#assign_group_perm) which means, removes a permission from a group.
 
-Assigns or revokes a permission for a user or group on a specific object.
+This asynchronous function revokes a specified permission from a group. It can also optionally revoke the permission for specific users within the group
+and/or for a specific object. If the `revoke_users_permissions` parameter is set to True, 
+the permission will also be revoked from the users within the group.
 
 #### Signature
 
 ```python
-async def assign_perm(perm: str, users: Any, obj: Any | None = None, revoke: bool = False) -> None:
+async def remove_group_perm(
+    perm: type[edgy.Model] | str,
+    group: type[edgy.Model] | str,
+    users: type[edgy.Model] | None = None,
+    obj: Any | None = None,
+    revoke_users_permissions: bool = False,
+) -> None:
 ```
 
 #### Parameters
 
-- `perm` (str): The permission to assign or revoke. This should be a string representing the permission name.
-- `users` (Any): The user or group to assign or revoke the permission for. This can be an instance of a User or Group model.
-- `obj` (Any, optional): The object to assign or revoke the permission for. This can be any object for which permissions are managed. Defaults to None, meaning the permission is assigned or revoked globally.
-- `revoke` (bool, optional): If True, the permission will be revoked instead of assigned. Defaults to False.
-
-#### Returns
-
-- `None`
+- **`perm`**: The permission to assign or revoke. This should be a string representing the permission codename.
+- **`group`**: The group to which the permission will be assigned or from which it will be revoked.
+- **`users`**: The users within the group for whom the permission will be assigned or revoked. Defaults to None.
+- **`obj`**: The object for which the permission is assigned or revoked. Defaults to None.
+- **`revoke_users_permissions`**: If set to True, the permission will also be revoked from the users within the group. Defaults to False.
 
 #### Example
 
 ```python
-# Assign the 'edit' permission to a user for a specific object
-await assign_perm('edit', user_instance, obj=some_object)
+await remove_group_perm('edit', group, users=[user1, user2], obj=some_object)
+await remove_group_perm('view', group, users=[user2], obj=some_object)
+await remove_group_perm('delete', group, revoke=True, revoke_users_permissions=True)
+```
 
-# Revoke the 'delete' permission from a group globally
-await assign_perm('delete', group_instance, revoke=True)
+### `has_group_permission`
+
+#### Description
+
+Checks if a user has a specific permission for a given object.
+
+This asynchronous function verifies whether the specified user has the 
+given permission for the provided object by querying the permissions model.
+
+#### Signature
+
+```python
+async def has_group_permission(user: type[edgy.Model], perm: str, obj: Any) -> bool:
+```
+
+#### Parameters
+
+- `user`: The user for whom the permission check is being performed.
+- `perm`: The permission string to check (e.g., 'view', 'edit').
+- `obj`: The object for which the permission is being checked.
+
+#### Example
+
+```python
+has_permission = await has_group_permission(user, 'edit', some_object)
+
+if has_permission:
+    print("User has permission to edit the object.")
+else:
+    print("User does not have permission to edit the object.")
 ```
 
 ## Real-Life Examples

@@ -8,3 +8,4 @@ You are free to ignore the use of Esmerald if your preferred framework is someth
 FastAPI, Starlette, Litestar, Sanic, Quartz...
 
 The same principle is still applied.
+

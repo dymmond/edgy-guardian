@@ -69,7 +69,7 @@ plugins:
             show_symbol_type_toc: true
 
 nav:
-  - Introduction: "index.md"
+  - Installation: "index.md"
   - Mixins: "mixins.md"
   - Shortcuts: "shortcuts.md"
   - Tutorial: "tutorial.md"
