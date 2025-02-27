@@ -27,17 +27,3 @@ def import_string(dotted_path: str) -> Any:
         ) from err
 
 
-def load_registry(relative_path: str, name: str) -> "Registry":
-    """
-    Loads a registry from a relative path.
-
-    Args:
-        relative_path (str): The relative path to the registry.
-        name (str): The name of the registry.
-
-    Returns:
-        edgy.Registry: The registry.
-    """
-    module = import_string(relative_path)
-    value = getattr(module, name, None)
-    return value
