@@ -147,7 +147,7 @@ class BasePermission(BaseUserGroup):
         ctype = await get_content_type(obj)
         filter_kwargs = {
             f"{cls.__model_type__}__id__in": [user.id],
-            "codename": perm,
+            "codename__iexact": perm,
             "content_type": ctype,
         }
         return await cls.query.filter(**filter_kwargs).exists()
@@ -290,6 +290,6 @@ class BaseGroup(BaseUserGroup):
         filter_kwargs = {
             f"{UserGroup.USER}__id__in": [user.id],
             "id": obj.id,
-            f"{UserGroup.PERMISSIONS}__codename": perm,
+            f"{UserGroup.PERMISSIONS}__codename__iexact": perm,
         }
         return await get_groups_model().query.filter(**filter_kwargs).exists()

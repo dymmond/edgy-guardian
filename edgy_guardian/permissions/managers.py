@@ -204,7 +204,7 @@ class PermissionManager(edgy.Manager, ManagerMixin):
         ctype = await get_content_type(obj)
         if not isinstance(perm, self.permissions_model):
             permission, _ = await self.get_or_create(
-                content_type=ctype, codename=perm, name=perm.capitalize()
+                content_type=ctype, codename=perm.lower(), name=perm.capitalize()
             )
         else:
             permission = perm
@@ -292,7 +292,7 @@ class GroupManager(edgy.Manager, ManagerMixin):
         ctype = await get_content_type(obj)
         if not isinstance(perm, self.permissions_model):
             permission, _ = await self.permissions_model.query.get_or_create(
-                content_type=ctype, codename=perm, name=perm.capitalize()
+                content_type=ctype, codename=perm.lower(), name=perm.capitalize()
             )
         else:
             permission = perm
