@@ -4,10 +4,11 @@ from typing import Any, ClassVar
 
 import edgy
 
+from edgy_guardian._internal._models import BaseGuardianModel
 from edgy_guardian.content_types.managers import ContentTypeManager
 
 
-class AbstractContentType(edgy.Model):
+class AbstractContentType(BaseGuardianModel):
     app_label: str = edgy.CharField(max_length=100)
     model: str = edgy.CharField(max_length=100)
 

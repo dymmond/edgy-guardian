@@ -218,3 +218,56 @@ async def remove_group_perm(
         )
     except RelationshipNotFound:
         return None
+
+
+async def assign_bulk_perm(
+    perms: list[edgy.Model] | list[str],
+    users: list[edgy.Model] | edgy.Model,
+    objs: list[Any],
+    revoke: bool = False,
+) -> None:
+    """
+    Assigns or revokes bulk permissions for users on specified objects.
+
+    This function allows for the bulk assignment or revocation of permissions for a list of users on a list of objects.
+    It can handle both permission models and permission names, as well as single or multiple user models.
+
+    Args:
+        perms (list[edgy.Model] | list[str]): A list of permission models or permission names to be assigned or revoked.
+            - If a list of permission models is provided, each model should be an instance of the edgy.Model class.
+            - If a list of permission names is provided, each name should be a string representing the permission.
+        users (list[edgy.Model] | edgy.Model): A list of user models or a single user model to whom the permissions will be assigned or revoked.
+            - If a list is provided, each element should be an instance of the edgy.Model class representing a user.
+            - If a single user model is provided, it should be an instance of the edgy.Model class.
+        objs (list[Any]): A list of objects on which the permissions will be assigned or revoked.
+            - Each object in the list can be of any type, depending on the context in which the permissions are being assigned.
+        revoke (bool, optional): A flag indicating whether to revoke the specified permissions.
+            - If True, the specified permissions will be revoked from the users on the objects.
+            - If False (default), the specified permissions will be assigned to the users on the objects.
+
+    Returns:
+        None: This function does not return any value.
+
+    Example:
+        # Assign permissions to multiple users on multiple objects
+        await assign_bulk_perm(
+            perms=["read", "write"],
+            users=[user1, user2],
+            objs=[obj1, obj2],
+            revoke=False
+        )
+
+        # Revoke permissions from a single user on multiple objects
+        await assign_bulk_perm(
+            perms=["read", "write"],
+            users=user1,
+            objs=[obj1, obj2],
+            revoke=True
+        )
+    """
+    return await get_permission_model().query.assign_bulk_perm(
+        users=users,
+        objs=objs,
+        perms=perms,
+        revoke=revoke,
+    )

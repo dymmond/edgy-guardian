@@ -6,6 +6,7 @@ from typing import Any, ClassVar
 import edgy
 from sqlalchemy.exc import IntegrityError
 
+from edgy_guardian._internal._models import BaseGuardianModel
 from edgy_guardian.content_types.utils import get_content_type
 from edgy_guardian.enums import UserGroup
 from edgy_guardian.permissions.managers import (
@@ -17,7 +18,7 @@ from edgy_guardian.utils import get_groups_model, get_user_model
 logger = logging.getLogger(__name__)
 
 
-class BaseUserGroup(edgy.Model):
+class BaseUserGroup(BaseGuardianModel):
     __model_type__: ClassVar[str] = None
 
     class Meta:
@@ -55,20 +56,50 @@ class BasePermission(BaseUserGroup):
 
     @classmethod
     async def __bulk_create_or_update_permissions(
-        cls, users: list[edgy.Model], obj: edgy.Model, names: list[str], revoke: bool
+        cls,
+        users: list["edgy.Model"],
+        permissions: list["edgy.Model"],
+        revoke: bool,
     ) -> None:
         """
-        Creates or updates a list of permissions for the given users and object.
-        """
-        if not revoke:
-            permissions = [{"users": users, "obj": obj, "name": name} for name in names]
-            try:
-                return await cls.query.bulk_create(permissions)
-            except IntegrityError as e:
-                logger.error("Error creating permissions", error=str(e))
-            return None
+        Creates or updates a list of permissions for the given users and objects.
 
-        return await cls.query.filter(users__in=users, obj=obj, name__in=names).delete()
+        Args:
+            users (list[edgy.Model]): List of user models to update permissions for.
+            permissions (list[edgy.Model]): List of permission models to apply.
+            revoke (bool): Flag indicating whether to revoke (True) or add (False) permissions.
+
+        Raises:
+            AssertionError: If the model type is not found in the permission.
+            IntegrityError: If there is an error processing the permission.
+        """
+
+        async def process_users(users: list["edgy.Model"], action):
+            """
+            Processes a list of users with the given action.
+
+            Args:
+                users (list[edgy.Model]): List of user models to process.
+                action (Callable): The action to perform on each user.
+            """
+            if isinstance(users, list):
+                for user in users:
+                    await action(user)
+            else:
+                await action(users)
+
+        for permission in permissions:
+            model = getattr(permission, cls.__model_type__, None)
+            if not model:
+                logger.error(f"Model '{cls.__model_type__}' not found")
+                raise AssertionError(f"'{cls.__model_type__}' not found")
+
+            try:
+                action = model.remove if revoke else model.add
+                await process_users(users, action)
+            except IntegrityError as e:
+                logger.error("Error processing permission", error=str(e))
+                raise e
 
     @classmethod
     async def __assign_permission(
@@ -90,12 +121,11 @@ class BasePermission(BaseUserGroup):
                 await action(users)
 
         try:
-            if revoke:
-                await process_users(users, model.remove)
-            else:
-                await process_users(users, model.add)
+            action = model.remove if revoke else model.add
+            await process_users(users, action)
         except IntegrityError as e:
             logger.error("Error processing permission", error=str(e))
+            raise e
 
     @classmethod
     async def assign_permission(
@@ -148,6 +178,38 @@ class BasePermission(BaseUserGroup):
             "content_type": ctype,
         }
         return await cls.query.filter(**filter_kwargs).exists()
+
+    @classmethod
+    async def assign_bulk_permission(
+        cls,
+        users: list["edgy.Model"],
+        permissions: list["edgy.Model"],
+        revoke: bool = False,
+    ) -> None:
+        """
+        Assign or revoke a list of permissions for a user or a list of users on a given object.
+
+        This method processes a list of users and assigns or revokes the specified permissions
+        for each user. It handles both adding and removing permissions based on the `revoke` flag.
+
+        Args:
+            users (List[edgy.Model]): A list of user models to whom the permissions will be assigned or revoked.
+            permissions (List[edgy.Model]): A list of permission models to be assigned or revoked.
+            revoke (bool, optional): If True, the permissions will be revoked. If False, the permissions will be assigned. Defaults to False.
+
+        Raises:
+            AssertionError: If the model type is not found in the permission.
+            IntegrityError: If there is an error processing the permission.
+
+        Example:
+            users = [user1, user2]
+            permissions = [perm1, perm2]
+            await PermissionManager.assign_bulk_permission(users, permissions, revoke=False)
+        """
+        assert isinstance(users, list), "Users must be a list."
+        assert isinstance(permissions, list), "Permissions must be a list."
+
+        return await cls.__bulk_create_or_update_permissions(users, permissions, revoke)
 
 
 class BaseGroup(BaseUserGroup):
@@ -255,6 +317,61 @@ class BaseGroup(BaseUserGroup):
             await permissions.remove(permission)
 
         return group_obj
+
+    @classmethod
+    async def assign_bulk_group_perm(
+        cls,
+        users: list["edgy.Model"],
+        perms: list[type["BasePermission"]],
+        groups: list[str],
+        revoke: bool = False,
+    ) -> None:
+        """
+        Assign or revoke a list of permissions for a user or a list of users in specified groups.
+
+        This method processes a list of users and assigns or revokes the specified permissions
+        for each user within the given groups. It handles both adding and removing permissions
+        based on the `revoke` flag.
+
+        Args:
+            users (List[edgy.Model]): A list of user models to whom the permissions will be assigned or revoked.
+            perms (List[Type[BasePermission]]): A list of permission models to be assigned or revoked.
+            groups (List[str]): A list of group names to which the permissions will be applied.
+            revoke (bool, optional): If True, the permissions will be revoked. If False, the permissions will be assigned. Defaults to False.
+
+        Raises:
+            AssertionError: If users is not a list or a User instance.
+            IntegrityError: If there is an error processing the permission.
+
+        Example:
+            users = [user1, user2]
+            perms = [perm1, perm2]
+            groups = ['group1', 'group2']
+            await PermissionManager.assign_bulk_group_perm(users, perms, groups, revoke=False)
+        """
+        assert isinstance(users, list) or isinstance(users, get_user_model()), (
+            "Users must be a list or a User instance."
+        )
+
+        # Pre-fetch group objects to minimize await calls
+        group_objs = []
+        for group in groups:
+            if not isinstance(group, cls):
+                group_obj, _ = await cls.query.get_or_create(name=group)
+            else:
+                group_obj = group
+            group_objs.append(group_obj)
+
+        for group_obj in group_objs:
+            # Assign/Revoke the users from the group
+            await cls.__assign_users(users, group_obj, revoke)
+
+            # Get the permission object from the group model
+            permissions = getattr(group_obj, UserGroup.PERMISSIONS)
+            if revoke:
+                await permissions.remove(*perms)
+            else:
+                await permissions.add(*perms)
 
     @classmethod
     async def has_group_permission(cls, user: edgy.Model, perm: str, obj: Any) -> bool:
