@@ -4,6 +4,8 @@
 
 ### Added
 
-### Changed
-
-### Fixed
+- First official release of Edgy Guardian
+- [Quickstart](./index.md) guide.
+- [Tutorial](./simple-how-to.md)
+- [Shortcuts](./shortcuts.md)
+- [Mixins](./mixins.md)
