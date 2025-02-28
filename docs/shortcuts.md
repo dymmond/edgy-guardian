@@ -99,40 +99,6 @@ This can be also achieved with [assign_perm](#assign_perm) by passing the `revok
 await assign_perm('delete', user_instance, obj=some_object, revoke=True)
 ```
 
-### `has_user_perm`
-
-This is another out of the box functionality that can be very handy to check if a `user` has a specific permission for a given object.
-
-This asynchronous function verifies whether the specified user has the given permission for the provided object by querying the permissions
-model.
-
-```python
-from edgy_guardian.shortcuts import has_user_perm
-```
-
-#### Signature
-
-```python
-async def has_user_perm(user: type[edgy.Model], perm: str, obj: Any) -> bool:
-```
-
-#### Parameters
-
-- **`user`**: The user for whom the permission check is being performed.
-- **`perm`**: The permission string to check (E.g.: 'view', 'edit').
-- **`obj`**: The object for which the permission is being checked.
-
-#### Example
-
-```python
-has_permission = await has_user_perm(user, 'edit', some_object)
-
-if has_permission:
-    print("User has permission to edit the object.")
-else:
-    print("User does not have permission to edit the object.")
-```
-
 ### `assign_group_perm`
 
 Assign or revoke a permission to/from a group, optionally for specific users and/or an object.
@@ -212,6 +178,222 @@ async def remove_group_perm(
 await remove_group_perm('edit', group, users=[user1, user2], obj=some_object)
 await remove_group_perm('view', group, users=[user2], obj=some_object)
 await remove_group_perm('delete', group, revoke=True, revoke_users_permissions=True)
+```
+
+### `assign_bulk_perm`
+
+Assigns or revokes bulk permissions for users on specified objects.
+
+This function allows for the bulk assignment or revocation of permissions for a list of users on a list of objects.
+It can handle both permission models and permission names, as well as single or multiple user models.
+
+#### Signature
+
+```python
+async def assign_bulk_perm(
+    perms: list[edgy.Model] | list[str],
+    users: list[edgy.Model] | edgy.Model,
+    objs: list[Any],
+    revoke: bool = False,
+) -> None:
+```
+
+#### Parameters
+
+- **`perms`**: A list of permission models or permission names to be assigned or revoked.
+- **`users`**: A list of user models or a single user model to whom the permissions will be assigned or revoked.
+- **`objs`**: A list of objects on which the permissions will be assigned or revoked.
+- **`revoke`**: A flag indicating whether to revoke the specified permissions.
+
+#### Example
+
+```python
+await assign_bulk_perm(
+    perms=["create", "edit", "delete"],
+    users=[user, user_two],
+    objs=[item, product],
+)
+
+await assign_bulk_perm(
+    perms=["create", "edit", "delete"],
+    users=[user, user_two],
+    objs=[item, product],
+    revoke=True,
+)
+```
+
+### `remove_bulk_perm`
+
+Removes bulk permissions for users on specified objects.
+
+This function allows for the bulk removal of permissions for a list of users on a list of objects.
+It can handle both permission models and permission names, as well as single or multiple user models.
+
+#### Signature
+
+```python
+async def remove_bulk_perm(
+    perms=["create", "edit", "delete"],
+    users=[user, user_two],
+    objs=[item, product],
+) -> None:
+```
+
+#### Parameters
+
+- **`perms`**: A list of permission models or permission names to be assigned or revoked.
+- **`users`**: A list of user models or a single user model to whom the permissions will be assigned or revoked.
+- **`objs`**: A list of objects on which the permissions will be assigned or revoked.
+
+#### Example
+
+```python
+await remove_bulk_perm(
+    perms=["create", "edit", "delete"],
+    users=[user, user_two],
+    objs=[item, product],
+)
+```
+
+### `assign_bulk_group_perm`
+
+Assigns or revokes bulk permissions for users on specified objects.
+
+This function allows for the bulk assignment or revocation of permissions for a list of users on a list of objects.
+It can handle both permission models and permission names, as well as single or multiple user models.
+
+#### Signature
+
+```python
+async def assign_bulk_group_perm(
+    perms: list[edgy.Model] | list[str],
+    users: list[edgy.Model] | edgy.Model,
+    groups: type[edgy.Model] | list[str],
+    objs: list[Any],
+    revoke: bool = False,
+    revoke_users_permissions: bool = False,
+) -> Any:
+```
+
+#### Parameters
+
+- **`perms`**: A list of permission models or permission names to be assigned or revoked.
+- **`users`**: A list of user models or a single user model to whom the group permissions will be assigned or revoked.
+- **`groups`**: A list of group models or a list of strings representing the groups to which the permissions will be assigned or revokeded.
+- **`objs`**: A list of objects on which the permissions will be assigned or revoked.
+- **`revoke`**: A flag indicating whether to revoke the specified group permissions.
+- **`revoke_users_permissions`**: A flag indicating whether to revoke the users' individual permissions when revoking group permissions.
+
+#### Example
+
+```python
+await assign_bulk_group_perm(
+    perms=["create", "edit", "delete"],
+    groups=["admin", "users"],
+    users=[user, user_two],
+    objs=[item, product],
+)
+
+# Revoke group permissions
+await assign_bulk_group_perm(
+    perms=["create", "edit", "delete"],
+    groups=["admin", "users"],
+    users=[user, user_two],
+    objs=[item, product],
+    revoke=True
+)
+
+# Revoke user permissions
+await assign_bulk_group_perm(
+    perms=["create", "edit", "delete"],
+    groups=["admin", "users"],
+    users=[user, user_two],
+    objs=[item, product],
+    revoke=True,
+    revoke_users_permissions=True
+)
+```
+
+### `remove_bulk_group_perm`
+
+Removes bulk group permissions for users on specified objects.
+
+This function allows for the bulk removal of group permissions for a list of users on a list of objects.
+It can handle both permission models and permission names, as well as single or multiple user models and group models.
+
+#### Signature
+
+```python
+async def remove_bulk_group_perm(
+    perms: list[edgy.Model] | list[str],
+    users: list[edgy.Model] | edgy.Model,
+    groups: type[edgy.Model] | list[str],
+    objs: list[Any],
+    revoke_users_permissions: bool = False,
+) -> Any:
+```
+
+#### Parameters
+
+- **`perms`**: A list of permission models or permission names to be assigned or revoked.
+- **`users`**: A list of user models or a single user model to whom the group permissions will be assigned or revoked.
+- **`groups`**: A list of group models or a list of strings representing the groups to which the permissions will be assigned or revokeded.
+- **`objs`**: A list of objects on which the permissions will be assigned or revoked.
+- **`revoke_users_permissions`**: A flag indicating whether to revoke the users' individual permissions when revoking group permissions.
+
+#### Example
+
+```python
+await remove_bulk_group_perm(
+    perms=["delete"],
+    groups=["admin", "users"],
+    users=[user, user_two],
+    objs=[item, product],
+)
+
+
+# Revoke user permissions
+await remove_bulk_group_perm(
+    perms=["delete"],
+    groups=["admin", "users"],
+    users=[user, user_two],
+    objs=[item, product],
+    revoke_users_permissions=True
+)
+```
+
+### `has_user_perm`
+
+This is another out of the box functionality that can be very handy to check if a `user` has a specific permission for a given object.
+
+This asynchronous function verifies whether the specified user has the given permission for the provided object by querying the permissions
+model.
+
+```python
+from edgy_guardian.shortcuts import has_user_perm
+```
+
+#### Signature
+
+```python
+async def has_user_perm(user: type[edgy.Model], perm: str, obj: Any) -> bool:
+```
+
+#### Parameters
+
+- **`user`**: The user for whom the permission check is being performed.
+- **`perm`**: The permission string to check (E.g.: 'view', 'edit').
+- **`obj`**: The object for which the permission is being checked.
+
+#### Example
+
+```python
+has_permission = await has_user_perm(user, 'edit', some_object)
+
+if has_permission:
+    print("User has permission to edit the object.")
+else:
+    print("User does not have permission to edit the object.")
 ```
 
 ### `has_group_permission`

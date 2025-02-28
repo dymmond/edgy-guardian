@@ -113,7 +113,7 @@ async def assign_group_perm(
 async def assign_bulk_group_perm(
     perms: list[edgy.Model] | list[str],
     users: list[edgy.Model] | edgy.Model,
-    groups: type[edgy.Model] | list[str],
+    groups: list[type[edgy.Model]] | list[str],
     objs: list[Any],
     revoke: bool = False,
     revoke_users_permissions: bool = False,
@@ -131,7 +131,7 @@ async def assign_bulk_group_perm(
         users (list[edgy.Model] | edgy.Model): A list of user models or a single user model to whom the permissions will be assigned or revoked.
             - If a list is provided, each element should be an instance of the edgy.Model class representing a user.
             - If a single user model is provided, it should be an instance of the edgy.Model class.
-        groups (type[edgy.Model] | list[str]): A group model or a string representing the group to which the permissions will be assigned or revoked.
+        groups (list[type[edgy.Model]] | list[str]): A group model or a string representing the group to which the permissions will be assigned or revoked.
             - If a group model is provided, it should be an instance of the edgy.Model class.
             - If a string is provided, it should represent the name of the group.
         objs (list[Any]): A list of objects on which the permissions will be assigned or revoked.
