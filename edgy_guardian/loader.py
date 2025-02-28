@@ -43,12 +43,16 @@ async def handle_content_types() -> None:
                 deleted_apps[ctype.app_label] = []
             deleted_apps[ctype.app_label].append(ctype.model)
 
+    models = set()
     new_apps: dict[str, list[str]] = {}
     for name, app_config in get_apps().app_configs.items():
         for _, model_class in app_config.get_models().items():
             if name not in deleted_apps:
                 if name not in new_apps:
                     new_apps[name] = []
+                if model_class.meta.tablename in models:
+                    continue
+                models.add(model_class.meta.tablename)
                 new_apps[name].append(model_class.meta.tablename)
 
     for name, models in deleted_apps.items():

@@ -7,6 +7,19 @@ from edgy.exceptions import RelationshipNotFound
 
 from edgy_guardian.utils import get_groups_model, get_permission_model
 
+__all__ = [
+    "has_user_perm",
+    "has_group_permission",
+    "assign_group_perm",
+    "assign_bulk_group_perm",
+    "assign_perm",
+    "remove_perm",
+    "remove_group_perm",
+    "assign_bulk_perm",
+    "remove_bulk_perm",
+    "remove_bulk_group_perm",
+]
+
 
 async def has_user_perm(user: type[edgy.Model], perm: str, obj: Any) -> bool:
     """
@@ -177,7 +190,7 @@ async def assign_bulk_group_perm(
 
 
 async def assign_perm(
-    perm: type[edgy.Model] | str, users: Any, obj: Any | None = None, revoke: bool = False
+    perm: type[edgy.Model] | str, users: Any, obj: Any, revoke: bool = False
 ) -> Any:
     """
     Assigns or revokes a permission for a user or group on a specific object.

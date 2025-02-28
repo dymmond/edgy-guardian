@@ -1,5 +1,12 @@
 # Release Notes
 
+## 0.1.1
+
+### Fixed
+
+- Unnecessary load of apps for ContentTypes.
+- Mandatory obj attribute in `assign_perm`.
+  
 ## 0.1.0
 
 ### Added

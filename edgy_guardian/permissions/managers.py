@@ -223,14 +223,18 @@ class PermissionManager(edgy.Manager, ManagerMixin):
         ]
 
         # Bulk inserts or creates the permissions and internally Edgy does in an atomic way
-        permissions = await self.permissions_model.query.bulk_get_or_create(
-            permissions, unique_fields=["content_type", "codename"]
+        permissions = (
+            await self.permissions_model.query.bulk_get_or_create(
+                permissions, unique_fields=["content_type", "codename"]
+            ),
         )
 
         # Make sure we add all permissions to the filter
         for perm in permissions:
-            self.permissions_model.query.filter(
-                codename=perm.codename, content_type=perm.content_type
+            (
+                self.permissions_model.query.filter(
+                    codename=perm.codename, content_type=perm.content_type
+                ),
             )
 
         # Get all permissions that were created
@@ -306,8 +310,10 @@ class GroupManager(edgy.Manager, ManagerMixin):
         # Handles the content type for permissions assignment
         ctype = await get_content_type(obj)
         if not isinstance(perm, self.permissions_model):
-            permission, _ = await self.permissions_model.query.get_or_create(
-                content_type=ctype, codename=perm.lower(), name=perm.capitalize()
+            permission, _ = (
+                await self.permissions_model.query.get_or_create(
+                    content_type=ctype, codename=perm.lower(), name=perm.capitalize()
+                ),
             )
         else:
             permission = perm
@@ -373,14 +379,18 @@ class GroupManager(edgy.Manager, ManagerMixin):
         ]
 
         # Bulk inserts or creates the permissions and internally Edgy does in an atomic way
-        permissions = await self.permissions_model.query.bulk_get_or_create(
-            permissions, unique_fields=["content_type", "codename"]
+        permissions = (
+            await self.permissions_model.query.bulk_get_or_create(
+                permissions, unique_fields=["content_type", "codename"]
+            ),
         )
 
         # Make sure we add all permissions to the filter
         for perm in permissions:
-            self.permissions_model.query.filter(
-                codename=perm.codename, content_type=perm.content_type
+            (
+                self.permissions_model.query.filter(
+                    codename=perm.codename, content_type=perm.content_type
+                ),
             )
 
         # Get all permissions that were created

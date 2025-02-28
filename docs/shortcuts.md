@@ -46,7 +46,7 @@ from edgy_guardian.shortcuts import assign_perm
 #### Signature
 
 ```python
-async def assign_perm(perm: str, users: Any, obj: Any | None = None, revoke: bool = False) -> Any:
+async def assign_perm(perm: str, users: Any, obj: Any, revoke: bool = False) -> Any:
 ```
 
 #### Parameters

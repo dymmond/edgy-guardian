@@ -84,22 +84,6 @@ class AppConfig(BaseModel):
 
         for name, model in members:
             models[name] = model
-
-        # Making sure the M2M tables are also passed
-        members_mapping = dict(members)
-
-        # Filter the models that have the required fields
-        filtered_models = {
-            field.through.__name__: field.through
-            for _, model_class in settings.edgy_guardian.registry.models.items()
-            for _, field in model_class.meta.fields.items()
-            if (
-                hasattr(field, "through")
-                and field.target.__name__ in members_mapping
-                and field.through.__name__ not in members_mapping.values()
-            )
-        }
-        models.update(filtered_models)
         return models
 
 

@@ -45,7 +45,7 @@ class BasePermission(BaseUserGroup):
     content_type: edgy.Model = edgy.ForeignKey("ContentType", on_delete=edgy.CASCADE)
     codename: str = edgy.CharField(max_length=100)
 
-    query: PermissionManager = PermissionManager()
+    query: ClassVar[edgy.Manager] = PermissionManager()
 
     class Meta:
         abstract = True
