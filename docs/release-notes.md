@@ -6,6 +6,7 @@
 
 - Unnecessary load of apps for ContentTypes.
 - Mandatory obj attribute in `assign_perm`.
+- Mypy typing and checks
   
 ## 0.1.0
 
