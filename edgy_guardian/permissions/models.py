@@ -13,7 +13,7 @@ from edgy_guardian.permissions.managers import (
     GroupManager,
     PermissionManager,
 )
-from edgy_guardian.utils import get_groups_model, get_user_model
+from edgy_guardian.utils import get_groups_model, get_permission_model, get_user_model
 
 logger = logging.getLogger(__name__)
 
@@ -302,7 +302,7 @@ class BaseGroup(BaseUserGroup):
 
         # Handles the content type for group assignment
         if not isinstance(group, cls):
-            group_obj, _ = await cls.query.get_or_create(name=group)
+            group_obj, _ = await cls.query.get_or_create(name=group.lower())
         else:
             group_obj = group
 
@@ -350,14 +350,25 @@ class BaseGroup(BaseUserGroup):
             await PermissionManager.assign_bulk_group_perm(users, perms, groups, revoke=False)
         """
         assert isinstance(users, list) or isinstance(users, get_user_model()), (
-            "Users must be a list or a User instance."
+            f"Users must be a list or a '{get_user_model().__name__}' instance."
         )
+
+        assert isinstance(perms, list) or isinstance(users, get_permission_model()), (
+            f"Permissions must be a list or a '{get_permission_model().__name__}' instance."
+        )
+
+        async def process_permissions(permissions, action):
+            if isinstance(permissions, list):
+                for permission in permissions:
+                    await action(permission)
+            else:
+                await action(permissions)
 
         # Pre-fetch group objects to minimize await calls
         group_objs = []
         for group in groups:
             if not isinstance(group, cls):
-                group_obj, _ = await cls.query.get_or_create(name=group)
+                group_obj, _ = await cls.query.get_or_create(name=group.lower())
             else:
                 group_obj = group
             group_objs.append(group_obj)
@@ -368,13 +379,18 @@ class BaseGroup(BaseUserGroup):
 
             # Get the permission object from the group model
             permissions = getattr(group_obj, UserGroup.PERMISSIONS)
-            if revoke:
-                await permissions.remove(*perms)
-            else:
-                await permissions.add(*perms)
+
+            try:
+                action = permissions.remove if revoke else permissions.add
+                await process_permissions(perms, action)
+            except IntegrityError as e:
+                logger.error("Error processing permission", error=str(e))
+                raise e
 
     @classmethod
-    async def has_group_permission(cls, user: edgy.Model, perm: str, obj: Any) -> bool:
+    async def has_group_permission(
+        cls, user: edgy.Model, perm: str, group: edgy.Model | str
+    ) -> bool:
         """
         Checks if a user has a specific permission on a given object.
 
@@ -400,7 +416,7 @@ class BaseGroup(BaseUserGroup):
         """
         filter_kwargs = {
             f"{UserGroup.USER}__id__in": [user.id],
-            "id": obj.id,
+            "name": group.name if isinstance(group, cls) else group,
             f"{UserGroup.PERMISSIONS}__codename__iexact": perm,
         }
         return await get_groups_model().query.filter(**filter_kwargs).exists()

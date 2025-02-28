@@ -5,11 +5,13 @@ from accounts.models import User
 from permissions.models import Group, Permission
 
 from edgy_guardian.shortcuts import (
+    assign_bulk_group_perm,
     assign_bulk_perm,
     assign_group_perm,
     assign_perm,
     has_group_permission,
     has_user_perm,
+    remove_bulk_group_perm,
     remove_bulk_perm,
     remove_group_perm,
     remove_perm,
@@ -416,15 +418,15 @@ class TestGroupPermissions:
 
         group2 = await assign_group_perm(perm="create", users=[user], obj=product, group="users")
 
-        has_permission = await has_group_permission(user=user, perm="create", obj=group)
+        has_permission = await has_group_permission(user=user, perm="create", group=group)
 
         assert has_permission is True
 
-        has_permission = await has_group_permission(user=user_two, perm="create", obj=group)
+        has_permission = await has_group_permission(user=user_two, perm="create", group=group)
 
         assert has_permission is True
 
-        has_permission = await has_group_permission(user=user_two, perm="create", obj=group2)
+        has_permission = await has_group_permission(user=user_two, perm="create", group=group2)
 
         assert has_permission is False
 
@@ -504,5 +506,294 @@ class TestBulkPermission:
         assert has_permission is False
 
         has_permission = await has_user_perm(user=user, perm="edit", obj=item)
+
+        assert has_permission is False
+
+
+class TestBulkGroupPermission:
+    async def test_assign_bulk_group_perm(self, client):
+        user = await UserFactory().build_and_save()
+        user_two = await UserFactory().build_and_save()
+        item = await ItemFactory().build_and_save()
+        product = await ProductFactory().build_and_save()
+
+        await assign_bulk_group_perm(
+            perms=["create", "edit", "delete"],
+            groups=["admin", "users"],
+            users=[user, user_two],
+            objs=[item, product],
+        )
+        total_permissions = await Permission.query.all()
+
+        assert len(total_permissions) == 6
+
+        total_users_in_permission = await total_permissions[0].users.all()
+
+        assert len(total_users_in_permission) == 2
+
+        total_users_in_permission = await total_permissions[1].users.all()
+
+        assert len(total_users_in_permission) == 2
+
+        has_permission = await has_user_perm(user=user, perm="create", obj=item)
+
+        assert has_permission is True
+
+        has_permission = await has_group_permission(user=user, perm="create", group="admin")
+
+        assert has_permission is True
+
+        has_permission = await has_group_permission(user=user, perm="read", group="admin")
+
+        assert has_permission is False
+
+        has_permission = await has_group_permission(user=user, perm="admin", group="admin")
+
+        assert has_permission is False
+
+    async def test_remove_bulk_group_perm(self, client):
+        user = await UserFactory().build_and_save()
+        user_two = await UserFactory().build_and_save()
+        item = await ItemFactory().build_and_save()
+        product = await ProductFactory().build_and_save()
+
+        await assign_bulk_group_perm(
+            perms=["create", "edit", "delete"],
+            groups=["admin", "users"],
+            users=[user, user_two],
+            objs=[item, product],
+        )
+        total_permissions = await Permission.query.all()
+
+        assert len(total_permissions) == 6
+
+        total_users_in_permission = await total_permissions[0].users.all()
+
+        assert len(total_users_in_permission) == 2
+
+        total_users_in_permission = await total_permissions[1].users.all()
+
+        assert len(total_users_in_permission) == 2
+
+        has_permission = await has_user_perm(user=user, perm="create", obj=item)
+
+        assert has_permission is True
+
+        has_permission = await has_group_permission(user=user, perm="create", group="admin")
+
+        assert has_permission is True
+
+        has_permission = await has_group_permission(user=user, perm="read", group="admin")
+
+        assert has_permission is False
+
+        has_permission = await has_group_permission(user=user, perm="admin", group="admin")
+
+        assert has_permission is False
+
+        # Remove the permissions
+
+        await remove_bulk_group_perm(
+            perms=["delete"],
+            groups=["admin", "users"],
+            users=[user, user_two],
+            objs=[item, product],
+        )
+
+        has_permission = await has_user_perm(user=user, perm="create", obj=item)
+
+        assert has_permission is True
+
+        has_permission = await has_group_permission(user=user, perm="create", group="admin")
+
+        assert has_permission is False
+
+        has_permission = await has_group_permission(user=user, perm="read", group="admin")
+
+        assert has_permission is False
+
+        has_permission = await has_group_permission(user=user, perm="admin", group="admin")
+
+        assert has_permission is False
+
+        has_permission = await has_group_permission(user=user, perm="create", group="users")
+
+        assert has_permission is False
+
+        has_permission = await has_group_permission(user=user, perm="read", group="users")
+
+        assert has_permission is False
+
+        has_permission = await has_group_permission(user=user, perm="admin", group="users")
+
+        assert has_permission is False
+
+    async def test_remove_bulk_group_perm_with_revoke_users_permissions(self, client):
+        user = await UserFactory().build_and_save()
+        user_two = await UserFactory().build_and_save()
+
+        item = await ItemFactory().build_and_save()
+        product = await ProductFactory().build_and_save()
+
+        await assign_bulk_group_perm(
+            perms=["create", "edit", "delete"],
+            groups=["admin", "users"],
+            users=[user, user_two],
+            objs=[item, product],
+        )
+
+        total_permissions = await Permission.query.all()
+
+        assert len(total_permissions) == 6
+
+        total_users_in_permission = await total_permissions[0].users.all()
+
+        assert len(total_users_in_permission) == 2
+
+        total_users_in_permission = await total_permissions[1].users.all()
+
+        assert len(total_users_in_permission) == 2
+
+        has_permission = await has_user_perm(user=user, perm="create", obj=item)
+
+        assert has_permission is True
+
+        has_permission = await has_group_permission(user=user, perm="create", group="admin")
+
+        assert has_permission is True
+
+        has_permission = await has_group_permission(user=user, perm="read", group="admin")
+
+        assert has_permission is False
+
+        has_permission = await has_group_permission(user=user, perm="admin", group="admin")
+
+        assert has_permission is False
+
+        # Remove the permissions
+
+        await remove_bulk_group_perm(
+            perms=["delete"],
+            groups=["admin", "users"],
+            users=[user, user_two],
+            objs=[item, product],
+            revoke_users_permissions=True,
+        )
+
+        has_permission = await has_user_perm(user=user, perm="create", obj=item)
+
+        assert has_permission is False
+
+        has_permission = await has_group_permission(user=user, perm="create", group="admin")
+
+        assert has_permission is False
+
+        has_permission = await has_group_permission(user=user, perm="read", group="admin")
+
+        assert has_permission is False
+
+        has_permission = await has_group_permission(user=user, perm="admin", group="admin")
+
+        assert has_permission is False
+
+        has_permission = await has_group_permission(user=user, perm="create", group="users")
+
+        assert has_permission is False
+
+        has_permission = await has_group_permission(user=user, perm="read", group="users")
+
+        assert has_permission is False
+
+        has_permission = await has_group_permission(user=user, perm="admin", group="users")
+
+        assert has_permission is False
+
+        total_users_in_permission = await total_permissions[0].users.all()
+
+        assert len(total_users_in_permission) == 0
+
+        total_users_in_permission = await total_permissions[1].users.all()
+
+        assert len(total_users_in_permission) == 0
+
+    async def test_remove_bulk_group_perm_with_revoke_users_permissions_and_revoke_group_permissions(
+        client,
+    ):
+        user = await UserFactory().build_and_save()
+        user_two = await UserFactory().build_and_save()
+
+        item = await ItemFactory().build_and_save()
+        product = await ProductFactory().build_and_save()
+
+        await assign_bulk_group_perm(
+            perms=["create", "edit", "delete"],
+            groups=["admin", "users"],
+            users=[user, user_two],
+            objs=[item, product],
+        )
+
+        total_permissions = await Permission.query.all()
+
+        assert len(total_permissions) == 6
+
+        total_users_in_permission = await total_permissions[0].users.all()
+
+        assert len(total_users_in_permission) == 2
+
+        total_users_in_permission = await total_permissions[1].users.all()
+
+        assert len(total_users_in_permission) == 2
+
+        has_permission = await has_user_perm(user=user, perm="create", obj=item)
+
+        assert has_permission is True
+
+        has_permission = await has_group_permission(user=user, perm="create", group="admin")
+
+        assert has_permission is True
+
+        has_permission = await has_group_permission(user=user, perm="read", group="admin")
+
+        assert has_permission is False
+
+        has_permission = await has_group_permission(user=user, perm="admin", group="admin")
+
+        assert has_permission is False
+
+        # Remove the permissions
+
+        await remove_bulk_group_perm(
+            perms=["delete"],
+            groups=["admin", "users"],
+            users=[user, user_two],
+            objs=[item, product],
+            revoke_users_permissions=True,
+        )
+
+        has_permission = await has_user_perm(user=user, perm="create", obj=item)
+
+        assert has_permission is False
+
+        has_permission = await has_group_permission(user=user, perm="create", group="admin")
+
+        assert has_permission is False
+
+        has_permission = await has_group_permission(user=user, perm="read", group="admin")
+
+        assert has_permission is False
+
+        has_permission = await has_group_permission(user=user, perm="admin", group="admin")
+
+        assert has_permission is False
+
+        has_permission = await has_group_permission(user=user, perm="create", group="users")
+
+        assert has_permission is False
+
+        has_permission = await has_group_permission(user=user, perm="read", group="users")
+
+        assert has_permission is False
+
+        has_permission = await has_group_permission(user=user, perm="admin", group="users")
 
         assert has_permission is False

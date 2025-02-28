@@ -332,10 +332,10 @@ class GroupManager(edgy.Manager, ManagerMixin):
 
     async def assign_bulk_group_perm(
         self,
+        perms: type[edgy.Model] | list[edgy.Model] | list[str],
         users: list[edgy.Model] | edgy.Model,
         groups: list[type[edgy.Model]] | list[str],
         objs: list[Any],
-        perms: type[edgy.Model] | list[edgy.Model] | list[str],
         revoke: bool,
         revoke_users_permissions: bool,
     ) -> None:
@@ -363,17 +363,28 @@ class GroupManager(edgy.Manager, ManagerMixin):
         permissions: list[edgy.Model] = []
 
         # Pre-fetch content types for all objects to avoid multiple await calls
-        content_types = {obj: await get_content_type(obj) for obj in objs}
+        content_types = [await get_content_type(obj) for obj in objs]
 
-        for perm in perms:
-            if not isinstance(perm, self.permissions_model):
-                for ctype in content_types.values():
-                    permission, _ = await self.get_or_create(
-                        content_type=ctype, codename=perm.lower(), name=perm.capitalize()
-                    )
-                    permissions.append(permission)
-            else:
-                permissions.extend([perm] * len(objs))
+        # Bulk create objects
+        permissions: list[dict[str, Any]] = [
+            {"content_type": content_type, "codename": perm.lower(), "name": perm.capitalize()}
+            for content_type in content_types
+            for perm in perms
+        ]
+
+        # Bulk inserts or creates the permissions and internally Edgy does in an atomic way
+        permissions = await self.permissions_model.query.bulk_get_or_create(
+            permissions, unique_fields=["content_type", "codename"]
+        )
+
+        # Make sure we add all permissions to the filter
+        for perm in permissions:
+            self.permissions_model.query.filter(
+                codename=perm.codename, content_type=perm.content_type
+            )
+
+        # Get all permissions that were created
+        permissions = await self.permissions_model.query.all()
 
         group_kwargs = {
             "perms": permissions,
