@@ -271,3 +271,49 @@ async def assign_bulk_perm(
         perms=perms,
         revoke=revoke,
     )
+
+
+async def remove_bulk_perm(
+    perms: list[edgy.Model] | list[str], users: list[edgy.Model] | edgy.Model, objs: list[Any]
+) -> None:
+    """
+    Removes bulk permissions for users on specified objects.
+
+    This function allows for the bulk removal of permissions for a list of users on a list of objects.
+    It can handle both permission models and permission names, as well as single or multiple user models.
+
+    Args:
+        perms (list[edgy.Model] | list[str]): A list of permission models or permission names to be removed.
+            - If a list of permission models is provided, each model should be an instance of the edgy.Model class.
+            - If a list of permission names is provided, each name should be a string representing the permission.
+        users (list[edgy.Model] | edgy.Model): A list of user models or a single user model from whom the permissions will be removed.
+            - If a list is provided, each element should be an instance of the edgy.Model class representing a user.
+            - If a single user model is provided, it should be an instance of the edgy.Model class.
+        objs (list[Any]): A list of objects from which the permissions will be removed.
+            - Each object in the list can be of any type, depending on the context in which the permissions are being removed.
+
+    Returns:
+        None: This function does not return any value.
+
+    Raises:
+        RelationshipNotFound: If the relationship between the user and the object is not found.
+
+    Example:
+        # Remove permissions from multiple users on multiple objects
+        await remove_bulk_perm(
+            perms=["read", "write"],
+            users=[user1, user2],
+            objs=[obj1, obj2]
+        )
+
+        # Remove permissions from a single user on multiple objects
+        await remove_bulk_perm(
+            perms=["read", "write"],
+            users=user1,
+            objs=[obj1, obj2]
+        )
+    """
+    try:
+        return await assign_bulk_perm(perms, users, objs, revoke=True)
+    except RelationshipNotFound:
+        return None

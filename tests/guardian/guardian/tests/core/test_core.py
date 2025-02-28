@@ -10,6 +10,7 @@ from edgy_guardian.shortcuts import (
     assign_perm,
     has_group_permission,
     has_user_perm,
+    remove_bulk_perm,
     remove_group_perm,
     remove_perm,
 )
@@ -457,3 +458,51 @@ class TestBulkPermission:
         has_permission = await has_user_perm(user=user, perm="create", obj=item)
 
         assert has_permission is True
+
+    async def test_remove_bulk_permission(self, client):
+        user = await UserFactory().build_and_save()
+        user_two = await UserFactory().build_and_save()
+        item = await ItemFactory().build_and_save()
+        product = await ProductFactory().build_and_save()
+
+        await assign_bulk_perm(
+            perms=["create", "edit", "delete"],
+            users=[user, user_two],
+            objs=[item, product],
+            revoke=False,
+        )
+
+        total_permissions = await Permission.query.all()
+
+        assert len(total_permissions) == 6
+
+        total_users_in_permission = await total_permissions[0].users.all()
+
+        assert len(total_users_in_permission) == 2
+
+        total_users_in_permission = await total_permissions[1].users.all()
+
+        assert len(total_users_in_permission) == 2
+
+        has_permission = await has_user_perm(user=user, perm="create", obj=item)
+
+        assert has_permission is True
+
+        has_permission = await has_user_perm(user=user, perm="edit", obj=item)
+
+        assert has_permission is True
+
+        # Remove the permissions
+        await remove_bulk_perm(
+            perms=["delete"],
+            users=[user, user_two],
+            objs=[item, product],
+        )
+
+        has_permission = await has_user_perm(user=user, perm="create", obj=item)
+
+        assert has_permission is False
+
+        has_permission = await has_user_perm(user=user, perm="edit", obj=item)
+
+        assert has_permission is False
