@@ -109,9 +109,11 @@ class AbstractContentType(BaseGuardianModel):
 
         for app_config in get_apps().app_configs.items():
             for models in app_config.get_models():
-                await cls.query.update_or_create(
-                    app_label=app_config.get_app_name(),
-                    defaults={"model": models.__name__},
+                (
+                    await cls.query.update_or_create(
+                        app_label=app_config.get_app_name(),
+                        defaults={"model": models.__name__},
+                    ),
                 )
         return True
 

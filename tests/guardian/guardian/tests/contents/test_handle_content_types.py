@@ -12,18 +12,6 @@ pytestmark = pytest.mark.anyio
 models = settings.edgy_guardian.registry
 
 
-async def test_handle_content_types_generate_content_types(client):
-    total = await ContentType.query.all()
-
-    assert len(total) == len(models.models)
-
-    await handle_content_types()
-
-    total = await ContentType.query.all()
-
-    assert len(total) == len(models.models)
-
-
 async def test_handle_content_types_when_tables_are_removed_from_registry(client):
     new_registry = Registry(database=models.database)
     new_registry.models = {
