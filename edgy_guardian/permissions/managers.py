@@ -184,6 +184,66 @@ class PermissionManager(edgy.Manager, ManagerMixin):
         await self.permissions_model.assign_permission(**kwargs)
         return permission
 
+    async def assign_bulk_perm(
+        self,
+        perms: list[edgy.Model] | list[str],
+        users: list[edgy.Model] | edgy.Model,
+        objs: list[Any],
+        revoke: bool,
+    ) -> None:
+        """
+        Assigns permissions in bulk to a user or list of users.
+        """
+        self._check_field_exists(self.user_field, "ManyToManyField", self.permissions_model)
+
+        if not isinstance(
+            self.permissions_model.meta.fields[self.user_field], edgy.ManyToManyField
+        ):
+            raise GuardianImproperlyConfigured(
+                f"'{self.user_field}' must be a '{edgy.ManyToManyField.__name__}'."
+            )
+
+        if not isinstance(perms, list):
+            perms = [perms]
+
+        if not isinstance(users, list):
+            users = [users]
+
+        if not isinstance(objs, list):
+            objs = [objs]
+
+        # Pre-fetch content types for all objects to avoid multiple await calls
+        content_types = [await get_content_type(obj) for obj in objs]
+
+        # Bulk create objects
+        permissions: list[dict[str, Any]] = [
+            {"content_type": content_type, "codename": perm.lower(), "name": perm.capitalize()}
+            for content_type in content_types
+            for perm in perms
+        ]
+
+        # Bulk inserts or creates the permissions and internally Edgy does in an atomic way
+        permissions = await self.permissions_model.query.bulk_get_or_create(
+            permissions, unique_fields=["content_type", "codename"]
+        )
+
+        # Make sure we add all permissions to the filter
+        for perm in permissions:
+            self.permissions_model.query.filter(
+                codename=perm.codename, content_type=perm.content_type
+            )
+
+        # Get all permissions that were created
+        permissions = await self.permissions_model.query.all()
+
+        # Assign permissions in bulk
+        kwargs = {
+            "users": users,
+            "permissions": permissions,
+            "revoke": revoke,
+        }
+        await self.permissions_model.assign_bulk_permission(**kwargs)
+
     async def has_user_perm(self, user: edgy.Model, perm: str, obj: Any) -> bool:
         """
         Checks if user has any permissions for given object.
@@ -269,3 +329,77 @@ class GroupManager(edgy.Manager, ManagerMixin):
         }
         await self.permissions_model.assign_permission(**kwargs)
         return group_obj
+
+    async def assign_bulk_group_perm(
+        self,
+        perms: type[edgy.Model] | list[edgy.Model] | list[str],
+        users: list[edgy.Model] | edgy.Model,
+        groups: list[type[edgy.Model]] | list[str],
+        objs: list[Any],
+        revoke: bool,
+        revoke_users_permissions: bool,
+    ) -> None:
+        self._check_field_exists(self.user_field, "ManyToManyField", self.group_model)
+        self._check_field_exists(self.permissions_field, "ManyToManyField", self.group_model)
+
+        # Check if the user field is a ManyToManyField in the group model
+        self.__check_many_to_many_field(self.group_model, self.user_field)
+
+        # Check if the permissions field is a ManyToManyField in the group model
+        self.__check_many_to_many_field(self.group_model, self.permissions_field)
+
+        if any(getattr(obj, "pk", None) is None for obj in objs):
+            raise ObjectNotPersisted("All objects need to be persisted first")
+
+        if not isinstance(perms, list):
+            perms = [perms]
+
+        if not isinstance(groups, list):
+            groups = [groups]
+
+        if not isinstance(users, list):
+            users = [users]
+
+        permissions: list[edgy.Model] = []
+
+        # Pre-fetch content types for all objects to avoid multiple await calls
+        content_types = [await get_content_type(obj) for obj in objs]
+
+        # Bulk create objects
+        permissions: list[dict[str, Any]] = [
+            {"content_type": content_type, "codename": perm.lower(), "name": perm.capitalize()}
+            for content_type in content_types
+            for perm in perms
+        ]
+
+        # Bulk inserts or creates the permissions and internally Edgy does in an atomic way
+        permissions = await self.permissions_model.query.bulk_get_or_create(
+            permissions, unique_fields=["content_type", "codename"]
+        )
+
+        # Make sure we add all permissions to the filter
+        for perm in permissions:
+            self.permissions_model.query.filter(
+                codename=perm.codename, content_type=perm.content_type
+            )
+
+        # Get all permissions that were created
+        permissions = await self.permissions_model.query.all()
+
+        group_kwargs = {
+            "perms": permissions,
+            "users": users,
+            "groups": groups,
+            "revoke": revoke,
+        }
+
+        # Handles the content type for group assignment
+        await self.group_model.assign_bulk_group_perm(**group_kwargs)
+
+        # Handles the permissions
+        kwargs = {
+            "users": users,
+            "permissions": permissions,
+            "revoke": revoke_users_permissions,
+        }
+        await self.permissions_model.assign_bulk_permission(**kwargs)
