@@ -5,6 +5,7 @@
 ### Added
 
 - [Managers](./managers.md) documentation section.
+- Allow passing objects for permissions and groups in `has_user_perm` and `has_group_permission`.
 
 ### Changed
 

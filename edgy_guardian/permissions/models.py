@@ -160,7 +160,7 @@ class BasePermission(BaseUserGroup):
         return await cls.__assign_permission(users, permission, revoke)
 
     @classmethod
-    async def has_permission(cls, user: edgy.Model, perm: str, obj: Any) -> bool:
+    async def has_permission(cls, user: edgy.Model, perm: str | type["BasePermission"], obj: Any) -> bool:
         """
         Checks if a user has a specific permission on a given object.
 
@@ -174,7 +174,7 @@ class BasePermission(BaseUserGroup):
         ctype = await get_content_type(obj)
         filter_kwargs = {
             f"{cls.__model_type__}__id__in": [user.id],
-            "codename__iexact": perm,
+            "codename__iexact": perm if isinstance(perm, str) else perm.codename,
             "content_type": ctype,
         }
         return cast(bool, await cls.guardian.filter(**filter_kwargs).exists())
@@ -391,7 +391,7 @@ class BaseGroup(BaseUserGroup):
 
     @classmethod
     async def has_group_permission(
-        cls, user: edgy.Model, perm: str, group: edgy.Model | str
+        cls, user: edgy.Model, perm: str | type[edgy.Model], group: type["BaseGroup"] | str
     ) -> bool:
         """
         Checks if a user has a specific permission on a given object.
@@ -419,6 +419,8 @@ class BaseGroup(BaseUserGroup):
         filter_kwargs = {
             f"{UserGroup.USER}__id__in": [user.id],
             "name": group.name if isinstance(group, cls) else group,
-            f"{UserGroup.PERMISSIONS}__codename__iexact": perm,
+            f"{UserGroup.PERMISSIONS}__codename__iexact": perm.codename
+            if isinstance(perm, BasePermission)
+            else perm,
         }
         return cast(bool, await get_groups_model().guardian.filter(**filter_kwargs).exists())

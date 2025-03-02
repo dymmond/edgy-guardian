@@ -244,7 +244,9 @@ class PermissionManager(edgy.Manager, ManagerMixin):
         }
         await self.permissions_model.assign_bulk_permission(**kwargs)
 
-    async def has_user_perm(self, user: edgy.Model, perm: str, obj: Any) -> bool:
+    async def has_user_perm(
+        self, user: edgy.Model, perm: str | type[edgy.Model], obj: Any
+    ) -> bool:
         """
         Checks if user has any permissions for given object.
         """

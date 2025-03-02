@@ -21,7 +21,7 @@ __all__ = [
 ]
 
 
-async def has_user_perm(user: type[edgy.Model], perm: str, obj: Any) -> bool:
+async def has_user_perm(user: type[edgy.Model], perm: str | type[edgy.Model], obj: Any) -> bool:
     """
     Checks if a user has a specific permission for a given object.
 
@@ -50,7 +50,7 @@ async def has_user_perm(user: type[edgy.Model], perm: str, obj: Any) -> bool:
 
 
 async def has_group_permission(
-    user: type[edgy.Model], perm: str, group: type[edgy.Model] | str
+    user: type[edgy.Model], perm: str | type[edgy.Model], group: type[edgy.Model] | str
 ) -> bool:
     """
     Checks if a user has a specific permission for a given object.
