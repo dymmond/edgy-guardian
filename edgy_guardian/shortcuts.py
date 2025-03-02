@@ -46,7 +46,7 @@ async def has_user_perm(user: type[edgy.Model], perm: str, obj: Any) -> bool:
         >>> else:
         >>>     print("User does not have permission to edit the object.")
     """
-    return await get_permission_model().query.has_user_perm(user, perm, obj)
+    return await get_permission_model().guardian.has_user_perm(user, perm, obj)
 
 
 async def has_group_permission(
@@ -76,7 +76,7 @@ async def has_group_permission(
         >>> else:
         >>>     print("User does not have permission to edit the object.")
     """
-    return await get_groups_model().query.has_group_permission(user, perm, group)
+    return await get_groups_model().guardian.has_group_permission(user, perm, group)
 
 
 async def assign_group_perm(
@@ -113,7 +113,7 @@ async def assign_group_perm(
         >>> await assign_group_perm('view', group, revoke=True)
         >>> await assign_group_perm('delete', group, revoke=True, revoke_users_permissions=True)
     """
-    return await get_groups_model().query.assign_group_perm(
+    return await get_groups_model().guardian.assign_group_perm(
         users=users,
         group=group,
         obj=obj,
@@ -157,7 +157,7 @@ async def assign_bulk_group_perm(
             - If False (default), only the group permissions will be revoked.
 
     Returns:
-        Any: The result of the `assign_bulk_group_perm` method from the groups model's query.
+        Any: The result of the `assign_bulk_group_perm` method from the groups model's guardian.
 
     Example:
         # Assign group permissions to multiple users on multiple objects
@@ -179,7 +179,7 @@ async def assign_bulk_group_perm(
             revoke_users_permissions=True
         )
     """
-    return await get_groups_model().query.assign_bulk_group_perm(
+    return await get_groups_model().guardian.assign_bulk_group_perm(
         perms=perms,
         users=users,
         groups=groups,
@@ -219,7 +219,7 @@ async def assign_perm(
         # Revoke the 'delete' permission from a group globally
         await assign_perm('delete', group_instance, revoke=True)
     """
-    return await get_permission_model().query.assign_perm(
+    return await get_permission_model().guardian.assign_perm(
         users=users,
         obj=obj,
         perm=perm,
@@ -346,7 +346,7 @@ async def assign_bulk_perm(
             revoke=True
         )
     """
-    return await get_permission_model().query.assign_bulk_perm(
+    return await get_permission_model().guardian.assign_bulk_perm(
         users=users,
         objs=objs,
         perms=perms,

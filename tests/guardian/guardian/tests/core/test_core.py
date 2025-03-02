@@ -30,7 +30,7 @@ class TestPermission:
         await assign_perm(perm="create", users=[user], obj=item)
         await assign_perm(perm="create", users=[user], obj=product)
 
-        total_permissions = await Permission.query.count()
+        total_permissions = await Permission.guardian.count()
         assert total_permissions == 2
 
     async def test_assign_same_permission_to_users(self, client):
@@ -45,7 +45,7 @@ class TestPermission:
 
         assert len(total_users) == 2
 
-        perms = await Permission.query.all()
+        perms = await Permission.guardian.all()
 
         assert len(perms) == 1
 
@@ -68,7 +68,7 @@ class TestPermission:
         assert len(total_users) == 2
 
         # Check total perms
-        perms = await Permission.query.all()
+        perms = await Permission.guardian.all()
 
         assert len(perms) == 2
 
@@ -112,7 +112,7 @@ class TestPermission:
         assert len(total_users) == 2
 
         # Check total perms
-        perms = await Permission.query.all()
+        perms = await Permission.guardian.all()
 
         assert len(perms) == 2
 
@@ -153,7 +153,7 @@ class TestPermission:
         assert len(total_users) == 2
 
         # Check total perms
-        perms = await Permission.query.all()
+        perms = await Permission.guardian.all()
 
         assert len(perms) == 2
 
@@ -259,14 +259,14 @@ class TestPermission:
 
         await assign_perm(perm="create", users=[user], obj=item)
 
-        permission = await Permission.query.first()
+        permission = await Permission.guardian.first()
         total_users_in_permission = await permission.users.all()
 
         assert len(total_users_in_permission) == 1
 
         await user.delete()
 
-        permission = await Permission.query.first()
+        permission = await Permission.guardian.first()
         total_users_in_permission = await permission.users.all()
 
         assert len(total_users_in_permission) == 0
@@ -282,7 +282,7 @@ class TestGroupPermissions:
             perm="create", users=[user, user_two], obj=item, group="admin"
         )
 
-        total_groups = await Group.query.all()
+        total_groups = await Group.guardian.all()
 
         assert len(total_groups) == 1
 
@@ -290,7 +290,7 @@ class TestGroupPermissions:
 
         assert len(total_users_in_group) == 2
 
-        total_permissions = await Permission.query.all()
+        total_permissions = await Permission.guardian.all()
 
         assert len(total_permissions) == 1
 
@@ -324,7 +324,7 @@ class TestGroupPermissions:
 
         assert len(total_users_in_group) == 1
 
-        total_permissions = await Permission.query.all()
+        total_permissions = await Permission.guardian.all()
 
         assert len(total_permissions) == 1
 
@@ -356,7 +356,7 @@ class TestGroupPermissions:
 
         assert len(total_users_in_group) == 1
 
-        total_permissions = await Permission.query.all()
+        total_permissions = await Permission.guardian.all()
 
         assert len(total_permissions) == 1
 
@@ -386,7 +386,7 @@ class TestGroupPermissions:
 
         assert len(total_users_in_group) == 1
 
-        total_permissions = await Permission.query.all()
+        total_permissions = await Permission.guardian.all()
 
         assert len(total_permissions) == 1
 
@@ -445,7 +445,7 @@ class TestBulkPermission:
             revoke=False,
         )
 
-        total_permissions = await Permission.query.all()
+        total_permissions = await Permission.guardian.all()
 
         assert len(total_permissions) == 6
 
@@ -474,7 +474,7 @@ class TestBulkPermission:
             revoke=False,
         )
 
-        total_permissions = await Permission.query.all()
+        total_permissions = await Permission.guardian.all()
 
         assert len(total_permissions) == 6
 
@@ -523,7 +523,7 @@ class TestBulkGroupPermission:
             users=[user, user_two],
             objs=[item, product],
         )
-        total_permissions = await Permission.query.all()
+        total_permissions = await Permission.guardian.all()
 
         assert len(total_permissions) == 6
 
@@ -563,7 +563,7 @@ class TestBulkGroupPermission:
             users=[user, user_two],
             objs=[item, product],
         )
-        total_permissions = await Permission.query.all()
+        total_permissions = await Permission.guardian.all()
 
         assert len(total_permissions) == 6
 
@@ -642,7 +642,7 @@ class TestBulkGroupPermission:
             objs=[item, product],
         )
 
-        total_permissions = await Permission.query.all()
+        total_permissions = await Permission.guardian.all()
 
         assert len(total_permissions) == 6
 
@@ -732,7 +732,7 @@ class TestBulkGroupPermission:
             objs=[item, product],
         )
 
-        total_permissions = await Permission.query.all()
+        total_permissions = await Permission.guardian.all()
 
         assert len(total_permissions) == 6
 

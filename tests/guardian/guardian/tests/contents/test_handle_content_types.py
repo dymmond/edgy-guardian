@@ -21,7 +21,7 @@ async def test_handle_content_types_when_tables_are_removed_from_registry(client
 
     await handle_content_types()
 
-    total = await ContentType.query.all()
+    total = await ContentType.guardian.all()
 
     assert len(total) == 2
 

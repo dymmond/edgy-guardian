@@ -45,7 +45,7 @@ class BasePermission(BaseUserGroup):
     content_type: edgy.Model = edgy.ForeignKey("ContentType", on_delete=edgy.CASCADE)
     codename: str = edgy.CharField(max_length=100)
 
-    query: ClassVar[edgy.Manager] = PermissionManager()
+    guardian: ClassVar[PermissionManager] = PermissionManager()
 
     class Meta:
         abstract = True
@@ -177,7 +177,7 @@ class BasePermission(BaseUserGroup):
             "codename__iexact": perm,
             "content_type": ctype,
         }
-        return await cls.query.filter(**filter_kwargs).exists()
+        return await cls.guardian.filter(**filter_kwargs).exists()
 
     @classmethod
     async def assign_bulk_permission(
@@ -227,7 +227,7 @@ class BaseGroup(BaseUserGroup):
     __model_type__: ClassVar[str] = UserGroup.GROUP.value
 
     name: str = edgy.CharField(max_length=100, index=True)
-    query: ClassVar[GroupManager] = GroupManager()
+    guardian: ClassVar[GroupManager] = GroupManager()
 
     class Meta:
         unique_together = ["name"]
@@ -302,7 +302,7 @@ class BaseGroup(BaseUserGroup):
 
         # Handles the content type for group assignment
         if not isinstance(group, cls):
-            group_obj, _ = await cls.query.get_or_create(name=group.lower())
+            group_obj, _ = await cls.guardian.get_or_create(name=group.lower())
         else:
             group_obj = group
 
@@ -368,7 +368,7 @@ class BaseGroup(BaseUserGroup):
         group_objs = []
         for group in groups:
             if not isinstance(group, cls):
-                group_obj, _ = await cls.query.get_or_create(name=group.lower())
+                group_obj, _ = await cls.guardian.get_or_create(name=group.lower())
             else:
                 group_obj = group
             group_objs.append(group_obj)
@@ -419,4 +419,4 @@ class BaseGroup(BaseUserGroup):
             "name": group.name if isinstance(group, cls) else group,
             f"{UserGroup.PERMISSIONS}__codename__iexact": perm,
         }
-        return await get_groups_model().query.filter(**filter_kwargs).exists()
+        return await get_groups_model().guardian.filter(**filter_kwargs).exists()
