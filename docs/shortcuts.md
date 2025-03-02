@@ -78,7 +78,7 @@ from edgy_guardian.shortcuts import remove_perm
 #### Signature
 
 ```python
-async def remove_perm(perm: str, users: Any, obj: Any | None = None, revoke: bool = False) -> None:
+async def remove_perm(perm: str, users: Any, obj: Any | None = None) -> None:
 ```
 
 #### Parameters
