@@ -111,8 +111,6 @@ In this example:
 
 ## Apps
 
-Sure, here's a detailed explanation of the provided code:
-
 ### Overview
 
 This code defines a configuration system for managing applications and their models within a larger application framework. It includes two main classes: `AppConfig` and `Apps`.
