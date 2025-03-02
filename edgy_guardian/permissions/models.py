@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, ClassVar
+from typing import Any, ClassVar, cast
 
 import edgy
 from sqlalchemy.exc import IntegrityError
@@ -42,7 +42,7 @@ class BasePermission(BaseUserGroup):
     __model_type__: ClassVar[str] = UserGroup.USER.value
 
     name: str = edgy.CharField(max_length=100, null=True)
-    content_type: edgy.Model = edgy.ForeignKey("ContentType", on_delete=edgy.CASCADE)
+    content_type: edgy.ForeignKey = edgy.ForeignKey("ContentType", on_delete=edgy.CASCADE)
     codename: str = edgy.CharField(max_length=100)
 
     guardian: ClassVar[Any] = PermissionManager()  # noqa
@@ -74,7 +74,7 @@ class BasePermission(BaseUserGroup):
             IntegrityError: If there is an error processing the permission.
         """
 
-        async def process_users(users: list["edgy.Model"], action):
+        async def process_users(users: list["edgy.Model"] | Any, action: Any) -> None:
             """
             Processes a list of users with the given action.
 
@@ -113,7 +113,7 @@ class BasePermission(BaseUserGroup):
             logger.error(f"Model '{cls.__model_type__}' not found")
             return
 
-        async def process_users(users, action):
+        async def process_users(users: list[Any] | Any, action: Any) -> None:
             if isinstance(users, list):
                 for user in users:
                     await action(user)
@@ -150,7 +150,7 @@ class BasePermission(BaseUserGroup):
         Returns:
             None
         """
-        assert isinstance(users, list) or isinstance(users, get_user_model()), (
+        assert isinstance(users, list) or isinstance(users, get_user_model()), (  # type: ignore
             "Users must be a list or a User instance."
         )
 
@@ -177,7 +177,7 @@ class BasePermission(BaseUserGroup):
             "codename__iexact": perm,
             "content_type": ctype,
         }
-        return await cls.guardian.filter(**filter_kwargs).exists()
+        return cast(bool, await cls.guardian.filter(**filter_kwargs).exists())
 
     @classmethod
     async def assign_bulk_permission(
@@ -237,13 +237,15 @@ class BaseGroup(BaseUserGroup):
         return self.name
 
     @classmethod
-    async def __assign_users(cls, users: list[edgy.Model], obj: edgy.Model, revoke: bool) -> None:
+    async def __assign_users(
+        cls, users: list[type[edgy.Model]] | type[edgy.Model], obj: edgy.Model, revoke: bool
+    ) -> None:
         model = getattr(obj, UserGroup.USER, None)
         if not model:
             logger.error(f"Model '{cls.__model_type__}' not found")
             return
 
-        async def process_users(users, action):
+        async def process_users(users: list[Any] | Any, action: Any) -> None:
             if isinstance(users, list):
                 for user in users:
                     await action(user)
@@ -261,11 +263,11 @@ class BaseGroup(BaseUserGroup):
     @classmethod
     async def assign_group_perm(
         cls,
-        users: list[edgy.Model] | edgy.Model,
+        users: list[type[edgy.Model]] | type[edgy.Model],
         permission: type["BasePermission"],
-        group: type[edgy.Model] | str,
+        group: type["BaseGroup"] | str,
         revoke: bool = False,
-    ) -> None:
+    ) -> Any:
         """
         Assign or revoke a permission for a group.
 
@@ -293,7 +295,7 @@ class BaseGroup(BaseUserGroup):
             >>> await cls.assign_group_perm(permission, "admin", revoke=True)
         """
         # Assigns the users
-        assert isinstance(users, list) or isinstance(users, get_user_model()), (
+        assert isinstance(users, list) or isinstance(users, get_user_model()), (  # type: ignore
             "Users must be a list or a User instance."
         )
 
@@ -301,7 +303,7 @@ class BaseGroup(BaseUserGroup):
             users = [users]
 
         # Handles the content type for group assignment
-        if not isinstance(group, cls):
+        if isinstance(group, str):
             group_obj, _ = await cls.guardian.get_or_create(name=group.lower())
         else:
             group_obj = group
@@ -321,9 +323,9 @@ class BaseGroup(BaseUserGroup):
     @classmethod
     async def assign_bulk_group_perm(
         cls,
-        users: list["edgy.Model"],
-        perms: list[type["BasePermission"]],
-        groups: list[str],
+        users: list[type[edgy.Model]] | type[edgy.Model],
+        perms: list[type["BasePermission"]] | type["BasePermission"],
+        groups: list[str] | list["BaseGroup"],
         revoke: bool = False,
     ) -> None:
         """
@@ -349,15 +351,15 @@ class BaseGroup(BaseUserGroup):
             groups = ['group1', 'group2']
             await PermissionManager.assign_bulk_group_perm(users, perms, groups, revoke=False)
         """
-        assert isinstance(users, list) or isinstance(users, get_user_model()), (
+        assert isinstance(users, list) or isinstance(users, get_user_model()), (  # type: ignore
             f"Users must be a list or a '{get_user_model().__name__}' instance."
         )
 
-        assert isinstance(perms, list) or isinstance(users, get_permission_model()), (
+        assert isinstance(perms, list) or isinstance(users, get_permission_model()), (  # type: ignore
             f"Permissions must be a list or a '{get_permission_model().__name__}' instance."
         )
 
-        async def process_permissions(permissions, action):
+        async def process_permissions(permissions: list[Any] | Any, action: Any) -> None:
             if isinstance(permissions, list):
                 for permission in permissions:
                     await action(permission)
@@ -419,4 +421,4 @@ class BaseGroup(BaseUserGroup):
             "name": group.name if isinstance(group, cls) else group,
             f"{UserGroup.PERMISSIONS}__codename__iexact": perm,
         }
-        return await get_groups_model().guardian.filter(**filter_kwargs).exists()
+        return cast(bool, await get_groups_model().guardian.filter(**filter_kwargs).exists())
