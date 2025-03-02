@@ -2,6 +2,10 @@
 
 ## 0.1.1
 
+### Added
+
+- [Managers](./managers.md) documentation section.
+
 ### Changed
 
 - Rename internal models manager default from `query` to `guardian`. This will avoid any clash or

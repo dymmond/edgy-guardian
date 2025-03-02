@@ -73,6 +73,7 @@ nav:
   - Mixins: "mixins.md"
   - Shortcuts: "shortcuts.md"
   - Utilities: "utils.md"
+  - Managers: "managers.md"
   - Simple How to: "simple-how-to.md"
   - Contributing: "contributing.md"
   - Sponsorship: "sponsorship.md"
