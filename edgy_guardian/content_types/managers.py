@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 import edgy
 
@@ -8,7 +8,7 @@ import edgy
 class ContentTypeManager(edgy.Manager):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
-        self._cache = {}
+        self._cache: dict[Any, Any] = {}
 
     async def get_for_model(self, model: str | type[edgy.Model]) -> type[edgy.Model]:
         """
@@ -20,10 +20,10 @@ class ContentTypeManager(edgy.Manager):
             ContentType: The ContentType instance.
         """
         if isinstance(model, edgy.Model):
-            return await self.get(model=model.meta.tablename)
-        return await self.get(model=model)
+            return cast(type[edgy.Model], await self.get(model=model.meta.tablename))  # type: ignore
+        return cast(type[edgy.Model], await self.get(model=model))
 
-    async def get_for_id(self, id: Any) -> tuple[str, str]:
+    async def get_for_id(self, id: Any) -> Any:
         """
         Asynchronously retrieves the content type for the given ID.
         This method first attempts to retrieve the content type from the cache.
@@ -33,7 +33,7 @@ class ContentTypeManager(edgy.Manager):
         Args:
             id (Any): The ID of the content type to retrieve.
         Returns:
-            tuple[str, str]: The content type associated with the given ID.
+            Any: The content type associated with the given ID.
         """
 
         try:

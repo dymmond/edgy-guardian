@@ -1,9 +1,7 @@
 from __future__ import annotations
 
-from typing import Any
-
 import edgy
-from pydantic import BaseModel, model_validator
+from pydantic import BaseModel, ConfigDict, model_validator
 
 from edgy_guardian.enums import DefaultEnum
 
@@ -11,7 +9,7 @@ obj_setattr = object.__setattr__
 
 
 class EdgyGuardianConfig(BaseModel):
-    model_config: dict[str, Any] = {"extra": "allow", "arbitrary_types_allowed": True}
+    model_config: ConfigDict = {"extra": "allow", "arbitrary_types_allowed": True}
 
     registry: edgy.Registry | None = None
     """
@@ -47,7 +45,7 @@ class EdgyGuardianConfig(BaseModel):
     """
 
     @model_validator(mode="after")
-    def validate_models(self) -> None:
+    def validate_models(self) -> EdgyGuardianConfig:
         """
         Validates the models and makes sure that they are in the correct format.
         """

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, ClassVar
+from typing import Any, ClassVar, cast
 
 import edgy
 
@@ -17,11 +17,11 @@ class AbstractContentType(BaseGuardianModel):
     class Meta:
         abstract = True
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.app_labeled_name
 
     @property
-    def name(self):
+    def name(self) -> str:
         """
         Returns the name of the model class.
         This method attempts to instantiate the model class associated with the
@@ -53,7 +53,7 @@ class AbstractContentType(BaseGuardianModel):
         app_config = get_apps().get_app_config(self.app_label)
         return app_config.get_app_name()
 
-    def model_class(self) -> edgy.Model:
+    def model_class(self) -> type[edgy.Model]:
         """
         Returns the model class associated with the given app label and model name.
         This method attempts to retrieve the model class using the app label and model name
@@ -81,9 +81,9 @@ class AbstractContentType(BaseGuardianModel):
             type[edgy.Model]: An instance of the model class that matches the provided criteria.
         """
 
-        return await self.model_class().guardian.get(**kwargs)
+        return cast(type[edgy.Model], await self.model_class().guardian.get(**kwargs))
 
-    async def get_all_objects_for_this_type(self, **kwargs: Any):
+    async def get_all_objects_for_this_type(self, **kwargs: Any) -> Any:
         """
         Retrieve all objects of the specified type based on the provided filter criteria.
 

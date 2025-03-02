@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 import edgy
 from edgy.exceptions import RelationshipNotFound
@@ -46,7 +46,7 @@ async def has_user_perm(user: type[edgy.Model], perm: str | type[edgy.Model], ob
         >>> else:
         >>>     print("User does not have permission to edit the object.")
     """
-    return await get_permission_model().guardian.has_user_perm(user, perm, obj)
+    return cast(bool, await get_permission_model().guardian.has_user_perm(user, perm, obj))
 
 
 async def has_group_permission(
@@ -76,7 +76,7 @@ async def has_group_permission(
         >>> else:
         >>>     print("User does not have permission to edit the object.")
     """
-    return await get_groups_model().guardian.has_group_permission(user, perm, group)
+    return cast(bool, await get_groups_model().guardian.has_group_permission(user, perm, group))
 
 
 async def assign_group_perm(
@@ -251,7 +251,7 @@ async def remove_perm(perm: type[edgy.Model] | str, users: Any, obj: Any | None 
         await remove_perm('delete', group_instance)
     """
     try:
-        return await assign_perm(perm, users, obj, revoke=True)
+        await assign_perm(perm, users, obj, revoke=True)
     except RelationshipNotFound:
         return None
 
@@ -289,7 +289,7 @@ async def remove_group_perm(
         await remove_group_perm('view', group_instance, revoke_users_permissions=True)
     """
     try:
-        return await assign_group_perm(
+        await assign_group_perm(
             perm=perm,
             group=group,
             users=users,
@@ -298,7 +298,7 @@ async def remove_group_perm(
             revoke_users_permissions=revoke_users_permissions,
         )
     except RelationshipNotFound:
-        return None
+        return
 
 
 async def assign_bulk_perm(
@@ -346,7 +346,7 @@ async def assign_bulk_perm(
             revoke=True
         )
     """
-    return await get_permission_model().guardian.assign_bulk_perm(
+    await get_permission_model().guardian.assign_bulk_perm(
         users=users,
         objs=objs,
         perms=perms,
@@ -395,15 +395,15 @@ async def remove_bulk_perm(
         )
     """
     try:
-        return await assign_bulk_perm(perms, users, objs, revoke=True)
+        await assign_bulk_perm(perms, users, objs, revoke=True)
     except RelationshipNotFound:
-        return None
+        return
 
 
 async def remove_bulk_group_perm(
     perms: list[edgy.Model] | list[str],
     users: list[edgy.Model] | edgy.Model,
-    groups: type[edgy.Model] | list[str],
+    groups: list[type[edgy.Model]] | list[str],
     objs: list[Any],
     revoke_users_permissions: bool = False,
 ) -> None:
@@ -455,7 +455,7 @@ async def remove_bulk_group_perm(
         )
     """
     try:
-        return await assign_bulk_group_perm(
+        await assign_bulk_group_perm(
             perms=perms,
             users=users,
             groups=groups,
@@ -464,4 +464,4 @@ async def remove_bulk_group_perm(
             revoke_users_permissions=revoke_users_permissions,
         )
     except RelationshipNotFound:
-        return None
+        return

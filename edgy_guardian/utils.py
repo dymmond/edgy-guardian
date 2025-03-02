@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from functools import lru_cache
+from typing import cast
 
 import edgy
 
@@ -17,7 +18,7 @@ def get_content_type_model() -> edgy.Model:
 
     model = settings.edgy_guardian.content_type_model
     db_model = settings.edgy_guardian.registry.models[model]
-    return db_model
+    return cast(edgy.Model, db_model)
 
 
 @lru_cache
@@ -32,7 +33,7 @@ def get_user_model() -> edgy.Model:
 
     model = settings.edgy_guardian.user_model
     db_model = settings.edgy_guardian.registry.models[model]
-    return db_model
+    return cast(edgy.Model, db_model)
 
 
 @lru_cache
@@ -47,7 +48,7 @@ def get_permission_model() -> edgy.Model:
 
     model = settings.edgy_guardian.permission_model
     db_model = settings.edgy_guardian.registry.models[model]
-    return db_model
+    return cast(edgy.Model, db_model)
 
 
 @lru_cache
@@ -62,4 +63,4 @@ def get_groups_model() -> edgy.Model:
 
     model = settings.edgy_guardian.group_model
     db_model = settings.edgy_guardian.registry.models[model]
-    return db_model
+    return cast(edgy.Model, db_model)
