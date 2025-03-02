@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 import edgy
 
@@ -21,4 +21,4 @@ async def get_content_type(obj: Any) -> type[edgy.Model]:
     ContentType
         The content type of the object.
     """
-    return await get_content_type_model().guardian.get_for_model(obj)
+    return cast(type[edgy.Model], await get_content_type_model().guardian.get_for_model(obj))

@@ -12,7 +12,7 @@ class DefaultEnum(str, Enum):
     def __str__(self) -> str:
         return self.value
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return str(self)
 
 
@@ -24,5 +24,5 @@ class UserGroup(str, Enum):
     def __str__(self) -> str:
         return self.value
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return str(self)

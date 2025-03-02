@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import inspect
 from functools import lru_cache
-from typing import Any
+from typing import Any, cast
 
 import edgy
 from edgy.conf import settings
@@ -27,21 +27,21 @@ class AppConfig(BaseModel):
         """
         Returns the name of the application.
         """
-        return self.name
+        return cast(str, self.name)
 
-    def get_app_label(self) -> str:
+    def get_app_label(self) -> str | None:
         """
         Returns the label of the application.
         """
-        return getattr(self, "label", None)
+        return cast(str, getattr(self, "label", None))
 
     def get_verbose_name(self) -> str:
         """
         Returns the verbose name of the application.
         """
-        return self.verbose_name
+        return cast(str, self.verbose_name)
 
-    def __filter_model(self, condition: Any) -> edgy.Model:
+    def __filter_model(self, condition: Any) -> list[edgy.Model]:
         return [value for key, value in self.__app_models__.items() if condition(key, value)]
 
     def get_model(self, name: str) -> type[edgy.Model]:
@@ -49,11 +49,11 @@ class AppConfig(BaseModel):
         Returns the model from the application.
         """
 
-        def condition(key, value):
+        def condition(key: Any, value: Any) -> Any:
             return value.meta.tablename == name
 
         try:
-            return self.__filter_model(condition)[0]
+            return cast(type[edgy.Model], self.__filter_model(condition)[0])
         except (KeyError, IndexError):
             raise GuardianImproperlyConfigured(
                 f"Model '{name}' is not configured in '{self.get_app_name()}'."
@@ -75,7 +75,7 @@ class AppConfig(BaseModel):
 
         members = inspect.getmembers(
             module,
-            lambda attr: hasattr(attr, "meta")
+            lambda attr: hasattr(attr, "meta")  # type: ignore
             and not attr.meta.abstract
             and attr.meta.registry is not None
             and attr.__name__ in settings.edgy_guardian.registry.models
@@ -126,7 +126,7 @@ class Apps:
         """
         Returns the configurations of all the apps.
         """
-        return self.app_configs.values()
+        return cast(dict[str, AppConfig], self.app_configs.values())
 
     def get_app_config(self, app_label: str) -> AppConfig:
         """
@@ -147,7 +147,7 @@ class Apps:
         """
         Returns the model from the registry of the app config.
         """
-        app_config: type[AppConfig] = self.app_configs[app_label]
+        app_config = self.app_configs[app_label]
         return app_config.get_model(model_name)
 
 
