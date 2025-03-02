@@ -134,7 +134,7 @@ class PermissionManager(edgy.Manager, ManagerMixin):
         Returns:
             type[edgy.Model]: The model class associated with this manager.
         """
-        return self.model_class
+        return cast(type[edgy.Model], self.model_class)
 
     async def assign_perm(
         self,
@@ -174,7 +174,7 @@ class PermissionManager(edgy.Manager, ManagerMixin):
                 content_type=ctype, codename=perm.lower(), name=perm.capitalize()
             )
         else:
-            permission = perm
+            permission = perm  # type: ignore
 
         kwargs = {
             "users": users,
@@ -182,7 +182,7 @@ class PermissionManager(edgy.Manager, ManagerMixin):
             "permission": permission,
         }
         await self.permissions_model.assign_permission(**kwargs)
-        return permission
+        return cast(type[edgy.Model], permission)
 
     async def assign_bulk_perm(
         self,
@@ -204,13 +204,13 @@ class PermissionManager(edgy.Manager, ManagerMixin):
             )
 
         if not isinstance(perms, list):
-            perms = [perms]
+            perms = [perms]  # type: ignore
 
         if not isinstance(users, list):
             users = [users]
 
         if not isinstance(objs, list):
-            objs = [objs]
+            objs = [objs]  # type: ignore
 
         # Pre-fetch content types for all objects to avoid multiple await calls
         content_types = [await get_content_type(obj) for obj in objs]
@@ -250,11 +250,14 @@ class PermissionManager(edgy.Manager, ManagerMixin):
         """
         Checks if user has any permissions for given object.
         """
-        return await self.permissions_model.guardian.has_permission(user=user, perm=perm, obj=obj)
+        return cast(
+            bool,
+            await self.permissions_model.guardian.has_permission(user=user, perm=perm, obj=obj),
+        )
 
 
 class GroupManager(edgy.Manager, ManagerMixin):
-    def __check_many_to_many_field(self, model: edgy.Model, field_name: str) -> None:
+    def __check_many_to_many_field(self, model: type[edgy.Model], field_name: str) -> None:
         """
         Checks if the specified field in the given model is a ManyToManyField.
 
@@ -312,7 +315,7 @@ class GroupManager(edgy.Manager, ManagerMixin):
                 content_type=ctype, codename=perm.lower(), name=perm.capitalize()
             )
         else:
-            permission = perm
+            permission = perm  # type: ignore
 
         group_kwargs = {
             "permission": permission,
@@ -330,7 +333,7 @@ class GroupManager(edgy.Manager, ManagerMixin):
             "revoke": revoke_users_permissions,
         }
         await self.permissions_model.assign_permission(**kwargs)
-        return group_obj
+        return cast(type[edgy.Model], group_obj)
 
     async def assign_bulk_group_perm(
         self,
