@@ -12,7 +12,7 @@ class AbstractContentType(BaseGuardianModel):
     app_label: str = edgy.CharField(max_length=100)
     model: str = edgy.CharField(max_length=100)
 
-    guardian: ClassVar[ContentTypeManager] = ContentTypeManager()
+    guardian: ClassVar[Any] = ContentTypeManager()  # noqa
 
     class Meta:
         abstract = True

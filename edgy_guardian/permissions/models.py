@@ -45,7 +45,7 @@ class BasePermission(BaseUserGroup):
     content_type: edgy.Model = edgy.ForeignKey("ContentType", on_delete=edgy.CASCADE)
     codename: str = edgy.CharField(max_length=100)
 
-    guardian: ClassVar[PermissionManager] = PermissionManager()
+    guardian: ClassVar[Any] = PermissionManager()  # noqa
 
     class Meta:
         abstract = True
@@ -227,7 +227,7 @@ class BaseGroup(BaseUserGroup):
     __model_type__: ClassVar[str] = UserGroup.GROUP.value
 
     name: str = edgy.CharField(max_length=100, index=True)
-    guardian: ClassVar[GroupManager] = GroupManager()
+    guardian: ClassVar[Any] = GroupManager()  # noqa
 
     class Meta:
         unique_together = ["name"]
