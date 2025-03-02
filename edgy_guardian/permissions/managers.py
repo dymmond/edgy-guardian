@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 import edgy
 
@@ -70,7 +70,7 @@ class ManagerMixin:
             type[edgy.Model]: The permissions model class associated with this
             manager.
         """
-        return get_groups_model()
+        return cast(type[edgy.Model], get_groups_model())
 
     @property
     def permissions_model(self) -> type[edgy.Model]:
@@ -85,10 +85,10 @@ class ManagerMixin:
             type[edgy.Model]: The permissions model class associated with this
             manager.
         """
-        return get_permission_model()
+        return cast(type[edgy.Model], get_permission_model())
 
     def _check_field_exists(
-        self, field_name: str, field_type: str, model_class: edgy.Model | None = None
+        self, field_name: str, field_type: str, model_class: type[edgy.Model] | None = None
     ) -> None:
         """
         Checks if a specified field exists in the model's permissions.
@@ -354,7 +354,7 @@ class GroupManager(edgy.Manager, ManagerMixin):
             raise ObjectNotPersisted("All objects need to be persisted first")
 
         if not isinstance(perms, list):
-            perms = [perms]
+            perms = [perms]  # type: ignore
 
         if not isinstance(groups, list):
             groups = [groups]  # type: ignore
