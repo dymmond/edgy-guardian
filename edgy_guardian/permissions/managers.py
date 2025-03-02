@@ -357,7 +357,7 @@ class GroupManager(edgy.Manager, ManagerMixin):
             perms = [perms]
 
         if not isinstance(groups, list):
-            groups = [groups]
+            groups = [groups]  # type: ignore
 
         if not isinstance(users, list):
             users = [users]
@@ -368,10 +368,10 @@ class GroupManager(edgy.Manager, ManagerMixin):
         content_types = [await get_content_type(obj) for obj in objs]
 
         # Bulk create objects
-        permissions: list[dict[str, Any]] = [
+        permissions: list[dict[str, Any]] = [  # type: ignore
             {"content_type": content_type, "codename": perm.lower(), "name": perm.capitalize()}
             for content_type in content_types
-            for perm in perms
+            for perm in perms  # type: ignore
         ]
 
         # Bulk inserts or creates the permissions and internally Edgy does in an atomic way

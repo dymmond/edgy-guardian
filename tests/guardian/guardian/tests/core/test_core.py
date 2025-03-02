@@ -4,6 +4,7 @@ import pytest
 from accounts.models import User
 from permissions.models import Group, Permission
 
+from edgy_guardian.content_types.utils import get_content_type
 from edgy_guardian.shortcuts import (
     assign_bulk_group_perm,
     assign_bulk_perm,
@@ -203,6 +204,39 @@ class TestPermission:
         assert has_permission is True
 
         has_permission = await has_user_perm(user=user, perm="create", obj=product)
+
+        assert has_permission is False
+
+    async def test_user_has_permission_obj(self, client):
+        user = await UserFactory().build_and_save()
+        user_two = await UserFactory().build_and_save()
+        item = await ItemFactory().build_and_save()
+        product = await ProductFactory().build_and_save()
+
+        # Add Users
+        await assign_perm(perm="create", users=[user, user_two], obj=item)
+        await assign_perm(perm="create", users=[user_two], obj=product)
+
+        ctpe = await get_content_type(item)
+        perm_item = await Permission.guardian.get(codename="create", content_type=ctpe)
+
+        ctp = await get_content_type(product)
+        perm_product = await Permission.guardian.get(codename="create", content_type=ctp)
+
+        # Check if user has permission
+        has_permission = await has_user_perm(user=user, perm=perm_item, obj=item)
+
+        assert has_permission is True
+
+        has_permission = await has_user_perm(user=user_two, perm=perm_item, obj=item)
+
+        assert has_permission is True
+
+        has_permission = await has_user_perm(user=user_two, perm=perm_product, obj=product)
+
+        assert has_permission is True
+
+        has_permission = await has_user_perm(user=user, perm=perm_product, obj=product)
 
         assert has_permission is False
 
