@@ -1,6 +1,6 @@
 # Release Notes
 
-## 0.1.1
+## 0.2.0
 
 ### Added
 
@@ -16,7 +16,7 @@ the existing `query` override in any edgy models.
 
 - Unnecessary load of apps for ContentTypes.
 - Mandatory obj attribute in `assign_perm`.
-- Mypy typing and checks
+- Mypy typing and checks.
 
 ## 0.1.0
 
