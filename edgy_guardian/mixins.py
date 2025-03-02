@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 import edgy
 
@@ -43,7 +43,7 @@ class UserMixin:
             >>> else:
             >>>     print("User does not have permission to edit the object.")
         """
-        return await has_user_perm(self, perm, obj)
+        return await has_user_perm(cast(type[edgy.Model], self), perm, obj)
 
     async def assign_perm(
         self, perm: str | type[edgy.Model], obj: Any | None = None, revoke: bool = False
@@ -101,7 +101,9 @@ class UserMixin:
             >>> await user.assign_group_perm('view', group, revoke=True)
             >>> await user.assign_group_perm('delete', group, revoke=True, revoke_users_permissions=True)
         """
-        await assign_group_perm(perm, group, self, obj, revoke, revoke_users_permissions)
+        await assign_group_perm(
+            perm, group, cast(type[edgy.Model], self), obj, revoke, revoke_users_permissions
+        )
 
     async def has_group_permission(self, perm: str | type[edgy.Model], obj: Any) -> bool:
         """
@@ -125,7 +127,7 @@ class UserMixin:
             >>> else:
             >>>     print("User's group does not have permission to edit the object.")
         """
-        return await has_group_permission(self, perm, obj)
+        return await has_group_permission(cast(type[edgy.Model], self), perm, obj)
 
     async def remove_perm(self, perm: str | type[edgy.Model], obj: Any | None = None) -> None:
         """
@@ -168,4 +170,6 @@ class UserMixin:
         Example:
             >>> await user.remove_group_perm('edit', group, some_object)
         """
-        await remove_group_perm(perm, group, self, obj, revoke_users_permissions)
+        await remove_group_perm(
+            perm, group, cast(type[edgy.Model], self), obj, revoke_users_permissions
+        )

@@ -12,7 +12,7 @@ class AbstractContentType(BaseGuardianModel):
     app_label: str = edgy.CharField(max_length=100)
     model: str = edgy.CharField(max_length=100)
 
-    query: ClassVar[ContentTypeManager] = ContentTypeManager()
+    guardian: ClassVar[Any] = ContentTypeManager()  # noqa
 
     class Meta:
         abstract = True
@@ -76,12 +76,12 @@ class AbstractContentType(BaseGuardianModel):
         Retrieve an instance of the model class associated with this type using the provided keyword arguments.
 
         Args:
-            **kwargs (Any): Keyword arguments to filter the query.
+            **kwargs (Any): Keyword arguments to filter the guardian.
         Returns:
             type[edgy.Model]: An instance of the model class that matches the provided criteria.
         """
 
-        return await self.model_class().query.get(**kwargs)
+        return await self.model_class().guardian.get(**kwargs)
 
     async def get_all_objects_for_this_type(self, **kwargs: Any):
         """
@@ -93,7 +93,7 @@ class AbstractContentType(BaseGuardianModel):
             QuerySet: A QuerySet containing all objects that match the filter criteria.
         """
 
-        return await self.model_class().query.filter(**kwargs)
+        return await self.model_class().guardian.filter(**kwargs)
 
     @classmethod
     async def configure(cls) -> bool:
@@ -110,7 +110,7 @@ class AbstractContentType(BaseGuardianModel):
         for app_config in get_apps().app_configs.items():
             for models in app_config.get_models():
                 (
-                    await cls.query.update_or_create(
+                    await cls.guardian.update_or_create(
                         app_label=app_config.get_app_name(),
                         defaults={"model": models.__name__},
                     ),

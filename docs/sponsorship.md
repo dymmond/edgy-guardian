@@ -2,9 +2,6 @@
 
 Do you like **Edgy Guardian** and would like to help Edgy Guardian, other user and the author?
 
-## 🐦 Follow Edgy Guardian on Twitter
-
-
 ## ⭐ Star **Edgy Guardian** on GitHub
 
 Giving a star to Edgy Guardian is very simple and helps promoting the work across the developers around the world.

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from edgy.conf import settings
 
@@ -30,13 +30,15 @@ async def handle_content_types() -> None:
     from edgy_guardian.apps import get_apps
 
     try:
-        existing_content_types: list[BaseContentType] = await get_content_type_model().query.all()
+        existing_content_types: list[
+            BaseContentType
+        ] = await get_content_type_model().guardian.all()
     except KeyError:
         raise GuardianImproperlyConfigured(
             "EdgyGuardian requires a `content types` app/model to be installed and it seems that it is not installed or it was accidentally removed."
         ) from None
 
-    deleted_apps: dict[str, list[str]] = {}
+    deleted_apps: dict[str, Any] = {}
     for ctype in existing_content_types:
         if ctype.model_class() not in settings.edgy_guardian.registry.models.values():
             if ctype.app_label not in deleted_apps:
@@ -44,7 +46,7 @@ async def handle_content_types() -> None:
             deleted_apps[ctype.app_label].append(ctype.model)
 
     models = set()
-    new_apps: dict[str, list[str]] = {}
+    new_apps: dict[str, Any] = {}
     for name, app_config in get_apps().app_configs.items():
         for _, model_class in app_config.get_models().items():
             if name not in deleted_apps:
@@ -57,10 +59,10 @@ async def handle_content_types() -> None:
 
     for name, models in deleted_apps.items():
         for model in models:
-            await get_content_type_model().query.filter(app_label=name, model=model).delete()
+            await get_content_type_model().guardian.filter(app_label=name, model=model).delete()
 
     for name, models in new_apps.items():
         for model in models:
-            await get_content_type_model().query.get_or_create(app_label=name, model=model)
+            await get_content_type_model().guardian.get_or_create(app_label=name, model=model)
 
     logger.info("Content types have been successfully managed.")

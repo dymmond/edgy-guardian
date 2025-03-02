@@ -18,7 +18,7 @@ class TestUserMixinPermission:
         await user.assign_perm(perm="create", obj=item)
         await user.assign_perm(perm="create", obj=product)
 
-        total_permissions = await Permission.query.count()
+        total_permissions = await Permission.guardian.count()
         assert total_permissions == 2
 
     async def test_assign_same_permission_to_users(self, client):
@@ -33,7 +33,7 @@ class TestUserMixinPermission:
 
         assert len(total_users) == 2
 
-        perms = await Permission.query.all()
+        perms = await Permission.guardian.all()
 
         assert len(perms) == 1
 
@@ -58,7 +58,7 @@ class TestUserMixinPermission:
         assert len(total_users) == 2
 
         # Check total perms
-        perms = await Permission.query.all()
+        perms = await Permission.guardian.all()
 
         assert len(perms) == 2
 
@@ -101,7 +101,7 @@ class TestUserMixinPermission:
         assert len(total_users) == 2
 
         # Check total perms
-        perms = await Permission.query.all()
+        perms = await Permission.guardian.all()
 
         assert len(perms) == 2
 
@@ -144,7 +144,7 @@ class TestUserMixinPermission:
         assert len(total_users) == 2
 
         # Check total perms
-        perms = await Permission.query.all()
+        perms = await Permission.guardian.all()
 
         assert len(perms) == 2
 
