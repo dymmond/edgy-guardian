@@ -51,18 +51,15 @@ tasks:
 
   test:
     desc: Runs the suite tests
-    dir: "tests/guardian"
     cmds:
       - hatch run test:test {{ .CLI_ARGS}}
 
   test_man:
     desc: Runs the suite tests for specific modules
-    dir: "tests/guardian"
     cmds:
       - hatch run test:test_man {{ .CLI_ARGS}}
 
   coverage:
     desc: Runs the coverage tests
-    dir: "tests/guardian"
     cmds:
       - hatch run test:coverage {{ .CLI_ARGS }}
