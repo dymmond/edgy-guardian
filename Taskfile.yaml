@@ -1,10 +1,5 @@
 version: 3
 
-env:
-  ESMERALD_SETTINGS_MODULE: guardian.configs.settings.AppSettings
-  EDGY_SETTINGS_MODULE: guardian.configs.edgy.EdgyAppSettings
-  EDGY_DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/guardian
-
 tasks:
   # --------------------------- SETUP ------------------------------------
 
@@ -58,16 +53,16 @@ tasks:
     desc: Runs the suite tests
     dir: "tests/guardian"
     cmds:
-      - ESMERALD_SETTINGS_MODULE=guardian.configs.testing.settings.TestingAppSettings pytest {{.TESTONLY}} -s --disable-warnings
+      - hatch run test:test {{ .CLI_ARGS}}
 
   test_man:
     desc: Runs the suite tests for specific modules
     dir: "tests/guardian"
     cmds:
-      - ESMERALD_SETTINGS_MODULE=guardian.configs.testing.settings.TestingAppSettings hatch run test:test_man {{ .TESTONLY}}
+      - hatch run test:test_man {{ .CLI_ARGS}}
 
   coverage:
     desc: Runs the coverage tests
     dir: "tests/guardian"
     cmds:
-      - hatch run test:coverage {{ .ARGS }}
+      - hatch run test:coverage {{ .CLI_ARGS }}
