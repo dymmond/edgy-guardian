@@ -1,4 +1,4 @@
-from __future__ import annotations
+from typing import Any
 
 import edgy
 from pydantic import BaseModel, ConfigDict, model_validator
@@ -45,7 +45,7 @@ class EdgyGuardianConfig(BaseModel):
     """
 
     @model_validator(mode="after")
-    def validate_models(self) -> EdgyGuardianConfig:
+    def validate_models(self) -> Any:
         """
         Validates the models and makes sure that they are in the correct format.
         """

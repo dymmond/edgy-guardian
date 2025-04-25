@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import inspect
 from functools import lru_cache
 from typing import Any, cast
