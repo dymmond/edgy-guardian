@@ -1,5 +1,12 @@
 # Release Notes
 
+## 0.3.0
+
+### Changed
+
+- Removed `from __future__ import annotations` as the minimum version of Python is 3.10.
+- Add minimum version of `edgy` to be 0.31.0.
+
 ## 0.2.0
 
 ### Added

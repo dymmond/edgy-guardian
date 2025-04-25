@@ -13,6 +13,11 @@ tasks:
     cmds:
       - hatch shell
 
+  directives:
+    desc: Shows all available directives
+    cmds:
+      - esmerald directives
+
   clean:
     desc: Cleans caching, pyc and pycache files
     cmds:

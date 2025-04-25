@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from edgy_guardian.apps import AppConfig
 
 
