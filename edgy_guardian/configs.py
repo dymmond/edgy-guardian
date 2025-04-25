@@ -1,8 +1,9 @@
+from typing import Any
+
 import edgy
 from pydantic import BaseModel, ConfigDict, model_validator
 
 from edgy_guardian.enums import DefaultEnum
-from typing import Self
 
 obj_setattr = object.__setattr__
 
@@ -44,7 +45,7 @@ class EdgyGuardianConfig(BaseModel):
     """
 
     @model_validator(mode="after")
-    def validate_models(self) -> Self:
+    def validate_models(self) -> Any:
         """
         Validates the models and makes sure that they are in the correct format.
         """
