@@ -59,6 +59,11 @@ dependencies = [
     "ptpython",
     "twine",
 ]
+[tool.hatch.envs.default.env-vars]
+ESMERALD_SETTINGS_MODULE = "guardian.configs.settings.AppSettings"
+EDGY_SETTINGS_MODULE = "guardian.configs.edgy.EdgyAppSettings"
+EDGY_DATABASE_URL = "postgresql+asyncpg://postgres:postgres@localhost:5432/guardian"
+
 
 [project.optional-dependencies]
 testing = [
@@ -106,6 +111,14 @@ features = ["testing"]
 test = "hatch test -- {args}"
 test_man = "hatch test -- {args} -s -vv"
 check_types = "mypy -p edgy_guardian"
+
+[tool.hatch.envs.hatch-test]
+features = ["testing"]
+
+[tool.hatch.envs.hatch-test.env-vars]
+ESMERALD_SETTINGS_MODULE = "guardian.configs.testing.settings.TestingAppSettings"
+EDGY_SETTINGS_MODULE = "guardian.configs.edgy.EdgyAppSettings"
+EDGY_DATABASE_URL = "postgresql+asyncpg://postgres:postgres@localhost:5432/guardian"
 
 [tool.isort]
 profile = "black"
