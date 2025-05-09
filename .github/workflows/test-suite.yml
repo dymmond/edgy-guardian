@@ -50,6 +50,7 @@ jobs:
       - name: "Install dependencies"
         if: steps.cache.outputs.cache-hit != 'true'
         run: |
+          pip install -U pip
           pip install hatch
           scripts/install
       - name: Install Taskfile
