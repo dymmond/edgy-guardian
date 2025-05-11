@@ -50,26 +50,12 @@ jobs:
           path: ${{ env.pythonLocation }}
           key: ${{ runner.os }}-python-${{ env.pythonLocation }}-${{ hashFiles('pyproject.toml') }}-test-v02
 
-      - name: Fix broken pip vendor and downgrade pip
+      - name: Install UV
         run: |
-          set -e
-
-          echo "Bootstrapping clean pip environment..."
-          python -m venv /tmp/clean-env
-          /tmp/clean-env/bin/python -m ensurepip --upgrade
-          /tmp/clean-env/bin/pip install --upgrade pip==24.0
-
-          echo "Overwriting broken global pip with clean version..."
-          cp -r /tmp/clean-env/lib/python*/site-packages/pip* \
-            $(python -c "import sysconfig; print(sysconfig.get_paths()['purelib'])")
-
-          echo "Pip version after fix:"
-          python -m pip --version
-
+          curl -LsSf https://astral.sh/uv/install.sh | sh
       - name: "Install dependencies"
         if: steps.cache.outputs.cache-hit != 'true'
         run: |
-          pip install hatch
           scripts/install
 
       - name: Install Taskfile
