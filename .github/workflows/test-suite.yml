@@ -38,27 +38,32 @@ jobs:
           --health-retries 5
 
     steps:
-      - uses: "actions/checkout@v4"
-      - uses: "actions/setup-python@v5"
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
         with:
           python-version: "${{ matrix.python-version }}"
+
       - uses: actions/cache@v4
         id: cache
         with:
           path: ${{ env.pythonLocation }}
           key: ${{ runner.os }}-python-${{ env.pythonLocation }}-${{ hashFiles('pyproject.toml') }}-test-v02
+
+      - name: Install UV
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
       - name: "Install dependencies"
         if: steps.cache.outputs.cache-hit != 'true'
         run: |
-          pip install hatch
           scripts/install
-      - name: Install Taskfile
-        run: "pip install go-task-bin"
       - name: "Run linting"
         if: steps.filters.outputs.src == 'true' || steps.filters.outputs.workflows == 'true'
-        run: "task lint"
+        run: task lint
+
       - name: "Run mypy"
-        run: "hatch run test:check_types"
+        run: hatch run test:check_types
+
       - name: "Run tests"
         env:
           EDGY_SETTINGS_MODULE: guardian.configs.edgy.EdgyAppSettings
