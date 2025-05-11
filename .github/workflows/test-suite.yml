@@ -47,10 +47,17 @@ jobs:
         with:
           path: ${{ env.pythonLocation }}
           key: ${{ runner.os }}-python-${{ env.pythonLocation }}-${{ hashFiles('pyproject.toml') }}-test-v02
+      - name: Fix broken pip vendor and downgrade pip
+        run: |
+           set -e
+           python -m site
+           echo "Cleaning broken resolvelib..."
+           rm -rf $(python -c "import sys; print(sys.prefix)")/lib/python*/site-packages/pip/_vendor/resolvelib || true
+           python -m ensurepip --upgrade
+           pip install --force-reinstall pip==24.0
       - name: "Install dependencies"
         if: steps.cache.outputs.cache-hit != 'true'
         run: |
-          pip install --force-reinstall pip==24.0
           pip install hatch
           scripts/install
       - name: Install Taskfile
