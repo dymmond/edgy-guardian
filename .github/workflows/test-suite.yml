@@ -50,7 +50,8 @@ jobs:
       - name: "Install dependencies"
         if: steps.cache.outputs.cache-hit != 'true'
         run: |
-          pipx install hatch
+          pip install --force-reinstall pip==24.0
+          pip install hatch
           scripts/install
       - name: Install Taskfile
         run: "pip install go-task-bin"
