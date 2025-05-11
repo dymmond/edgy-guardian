@@ -57,10 +57,6 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         run: |
           scripts/install
-
-      - name: Install Taskfile
-        run: pip install go-task-bin
-
       - name: "Run linting"
         if: steps.filters.outputs.src == 'true' || steps.filters.outputs.workflows == 'true'
         run: task lint
