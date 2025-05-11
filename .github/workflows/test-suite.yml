@@ -38,42 +38,50 @@ jobs:
           --health-retries 5
 
     steps:
-      - uses: "actions/checkout@v4"
-      - uses: "actions/setup-python@v5"
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
         with:
           python-version: "${{ matrix.python-version }}"
+
       - uses: actions/cache@v4
         id: cache
         with:
           path: ${{ env.pythonLocation }}
           key: ${{ runner.os }}-python-${{ env.pythonLocation }}-${{ hashFiles('pyproject.toml') }}-test-v02
+
       - name: Fix broken pip vendor and downgrade pip
         run: |
-           set -e
-           set -e
+          set -e
 
-           # Create temp venv to bootstrap pip
-           python -m venv /tmp/clean-env
-           /tmp/clean-env/bin/python -m ensurepip --upgrade
-           /tmp/clean-env/bin/pip install --upgrade pip==24.0
+          echo "Bootstrapping clean pip environment..."
+          python -m venv /tmp/clean-env
+          /tmp/clean-env/bin/python -m ensurepip --upgrade
+          /tmp/clean-env/bin/pip install --upgrade pip==24.0
 
-           # Use the clean pip to overwrite the broken system one
-           cp -r /tmp/clean-env/lib/python*/site-packages/pip* $(python -c "import sysconfig; print(sysconfig.get_paths()['purelib'])")
+          echo "Overwriting broken global pip with clean version..."
+          cp -r /tmp/clean-env/lib/python*/site-packages/pip* \
+            $(python -c "import sysconfig; print(sysconfig.get_paths()['purelib'])")
 
-           # Check that it's fixed
-           python -m pip --version
+          echo "Pip version after fix:"
+          python -m pip --version
+
       - name: "Install dependencies"
         if: steps.cache.outputs.cache-hit != 'true'
         run: |
           pip install hatch
           scripts/install
+
       - name: Install Taskfile
-        run: "pip install go-task-bin"
+        run: pip install go-task-bin
+
       - name: "Run linting"
         if: steps.filters.outputs.src == 'true' || steps.filters.outputs.workflows == 'true'
-        run: "task lint"
+        run: task lint
+
       - name: "Run mypy"
-        run: "hatch run test:check_types"
+        run: hatch run test:check_types
+
       - name: "Run tests"
         env:
           EDGY_SETTINGS_MODULE: guardian.configs.edgy.EdgyAppSettings
