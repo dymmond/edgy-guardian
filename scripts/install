@@ -19,5 +19,6 @@ else
 fi
 
 # Install the project in editable mode with extras
+$UV venv
 $UV pip install hatch
 $UV pip install -e ".[dev,testing]"
