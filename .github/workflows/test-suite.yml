@@ -56,6 +56,7 @@ jobs:
       - name: "Install dependencies"
         if: steps.cache.outputs.cache-hit != 'true'
         run: |
+          pip install go-task-bin
           pip install hatch
           scripts/install
       - name: "Run linting"
