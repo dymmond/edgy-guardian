@@ -50,9 +50,6 @@ jobs:
           path: ${{ env.pythonLocation }}
           key: ${{ runner.os }}-python-${{ env.pythonLocation }}-${{ hashFiles('pyproject.toml') }}-test-v02
 
-      - name: Install UV
-        run: |
-          curl -LsSf https://astral.sh/uv/install.sh | sh
       - name: "Install dependencies"
         if: steps.cache.outputs.cache-hit != 'true'
         run: |
