@@ -19,6 +19,21 @@ __all__ = [
 ]
 
 
+async def get_obj_perms(user: type[edgy.Model], obj: Any, **filters: Any) -> list[type[edgy.Model]]:
+    """
+    Return all permission instances of this type that `user` has on `obj`.
+
+    Args:
+        user (edgy.Model): the user whose permissions we’re querying.
+        obj (edgy.Model): the object to check permissions against.
+        **filters: extra lookup args (e.g. codename__iexact="change_stuff").
+
+    Returns:
+        List[BasePermission]: all matching permission records.
+    """
+    return cast(list[type[edgy.Model]], await get_permission_model().guardian.get_obj_perms(user, obj, **filters))
+
+
 async def has_user_perm(user: type[edgy.Model], perm: str | type[edgy.Model], obj: Any) -> bool:
     """
     Checks if a user has a specific permission for a given object.

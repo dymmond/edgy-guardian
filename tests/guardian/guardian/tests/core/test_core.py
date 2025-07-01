@@ -10,6 +10,7 @@ from edgy_guardian.shortcuts import (
     assign_bulk_perm,
     assign_group_perm,
     assign_perm,
+    get_obj_perms,
     has_group_permission,
     has_user_perm,
     remove_bulk_group_perm,
@@ -23,6 +24,25 @@ pytestmark = pytest.mark.anyio
 
 
 class TestPermission:
+    async def test_get_object_permissions_of_user(self, client):
+        user = await UserFactory().build_and_save()
+        item = await ItemFactory().build_and_save()
+        product = await ProductFactory().build_and_save()
+
+        await assign_perm(perm="create", users=[user], obj=item)
+        await assign_perm(perm="edit", users=[user], obj=item)
+        await assign_perm(perm="delete", users=[user], obj=item)
+
+
+        await assign_perm(perm="create", users=[user], obj=product)
+        await assign_perm(perm="update", users=[user], obj=product)
+
+        total_permissions = await get_obj_perms(user, item)
+        assert len(total_permissions) == 3
+
+        total_permissions = await get_obj_perms(user, product)
+        assert len(total_permissions) == 2
+
     async def test_assign_permission_to_user(self, client):
         user = await UserFactory().build_and_save()
         item = await ItemFactory().build_and_save()
