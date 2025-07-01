@@ -8,6 +8,17 @@
     <em>🔥 Per object permissions for Edgy 🔥</em>
 </p>
 
+<p align="center">
+  <a href="https://github.com/dymmond/edgy-guardian/actions/workflows/test-suite.yml/badge.svg?event=push&branch=main" target="_blank">
+    <img src="https://github.com/dymmond/edgy-guardian/actions/workflows/test-suite.yml/badge.svg?event=push&branch=main" alt="Test Suite">
+  </a>
+  <a href="https://pypi.org/project/edgy-guardian" target="_blank">
+    <img src="https://img.shields.io/pypi/v/edgy-guardian?color=%2334D058&label=pypi%20package" alt="Package version">
+  </a>
+  <a href="https://img.shields.io/pypi/pyversions/edgy-guardian.svg?color=%2334D058" target="_blank">
+    <img src="https://img.shields.io/pypi/pyversions/edgy-guardian.svg?color=%2334D058" alt="Supported Python versions">
+  </a>
+</p>
 ---
 
 **Documentation**: [https://edgy-guardian.dymmond.com](https://edgy-guardian.dymmond.com) 📚
