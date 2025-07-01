@@ -5,6 +5,7 @@ import edgy
 from edgy_guardian.shortcuts import (
     assign_group_perm,
     assign_perm,
+    get_obj_perms,
     has_group_permission,
     has_user_perm,
     remove_group_perm,
@@ -19,6 +20,18 @@ class UserMixin:
     This mixin can be added as an extension to the User model to provide
     methods for assigning and checking permissions for a user.
     """
+    async def obj_perms(self, obj: type[edgy.Model], **filters: Any) -> list[type[edgy.Model]]:
+        """
+        Return all permission instances of this type that `user` has on `obj`.
+
+        Args:
+            obj (edgy.Model): the object to check permissions against.
+            **filters: extra lookup args (e.g. codename__iexact="change_stuff").
+
+        Returns:
+            List[BasePermission]: all matching permission records.
+        """
+        return await get_obj_perms(cast(type[edgy.Model], self), obj, **filters)
 
     async def has_perm(self, perm: str, obj: Any) -> bool:
         """

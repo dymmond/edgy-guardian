@@ -67,7 +67,7 @@ testing = [
     "isort>=5.12.0,<6.0.0",
     "pytest>=7.2.2,<9.0.0",
     "pytest-cov>=4.0.0,<5.0.0",
-    "esmerald>=3.7.5",
+    "esmerald>=3.8.4",
     "edgy[postgres,testing]>=0.27.3,<1.0.0",
     "httpx",
     "pytest-pspec",
@@ -100,6 +100,9 @@ serve = "mkdocs serve --dev-addr localhost:8000"
 
 [tool.hatch.envs.test]
 features = ["testing"]
+dependencies = [
+  "esmerald"
+]
 
 [tool.hatch.envs.test.scripts]
 # needs docker services running

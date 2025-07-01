@@ -253,6 +253,19 @@ class PermissionManager(edgy.Manager, ManagerMixin):
             await self.permissions_model.guardian.has_permission(user=user, perm=perm, obj=obj),
         )
 
+    async def get_obj_perms(self, user: edgy.Model, obj: type[edgy.Model], **filters: Any) -> list[type[edgy.Model]]:
+        """
+        Return all permission instances of this type that `user` has on `obj`.
+
+        Args:
+            user (edgy.Model): the user whose permissions we’re querying.
+            obj (edgy.Model): the object to check permissions against.
+            **filters: extra lookup args (e.g. codename__iexact="change_stuff").
+
+        Returns:
+            List[BasePermission]: all matching permission records.
+        """
+        return cast(list[type[edgy.Model]], await self.permissions_model.guardian.get_user_obj_perms(user, obj, **filters))
 
 class GroupManager(edgy.Manager, ManagerMixin):
     def __check_many_to_many_field(self, model: type[edgy.Model], field_name: str) -> None:

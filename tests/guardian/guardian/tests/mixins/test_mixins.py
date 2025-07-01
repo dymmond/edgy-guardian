@@ -10,6 +10,25 @@ pytestmark = pytest.mark.anyio
 
 
 class TestUserMixinPermission:
+
+    async def test_get_object_permissions_of_user(self, client):
+        user = await UserFactory().build_and_save()
+        item = await ItemFactory().build_and_save()
+        product = await ProductFactory().build_and_save()
+
+        await user.assign_perm(perm="create", obj=item)
+        await user.assign_perm(perm="edit", obj=item)
+        await user.assign_perm(perm="delete", obj=item)
+
+
+        await user.assign_perm(perm="create", obj=product)
+        await user.assign_perm(perm="update", obj=product)
+
+        total_permissions = await user.obj_perms(item)
+        assert len(total_permissions) == 3
+
+        total_permissions = await user.obj_perms(product)
+        assert len(total_permissions) == 2
     async def test_assign_permission_to_user(self, client):
         user = await UserFactory().build_and_save()
         item = await ItemFactory().build_and_save()

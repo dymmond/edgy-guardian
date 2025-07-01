@@ -178,6 +178,28 @@ class BasePermission(BaseUserGroup):
         return cast(bool, await cls.guardian.filter(**filter_kwargs).exists())
 
     @classmethod
+    async def get_user_obj_perms(cls, user: edgy.Model, obj: edgy.Model, **filters: Any) -> list[type[edgy.Model]]:
+        """
+        Return all permission instances of this type that `user` has on `obj`.
+
+        Args:
+            user (edgy.Model): the user whose permissions we’re querying.
+            obj (edgy.Model): the object to check permissions against.
+            **filters: extra lookup args (e.g. codename__iexact="change_stuff").
+
+        Returns:
+            List[BasePermission]: all matching permission records.
+        """
+        ctype = await get_content_type(obj)
+
+        lookup = {
+            f"{cls.__model_type__}__id": user.id,
+            "content_type": ctype,
+            **filters,
+        }
+        return cast(list[type[edgy.Model]], await cls.guardian.filter(**lookup).all())
+
+    @classmethod
     async def assign_bulk_permission(
         cls,
         users: list["edgy.Model"],

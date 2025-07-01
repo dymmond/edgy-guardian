@@ -1,5 +1,12 @@
 # Release Notes
 
+## 0.4.0
+
+### Added
+
+* Added `get_obj_perms` shortcut to asynchronously retrieve all permissions a user holds on a given object, with support for Django-style filter kwargs.
+* Updated documentation and examples in `shortcuts` to include usage patterns and parameter details for `get_obj_perms`.
+
 ## 0.3.0
 
 ### Changed

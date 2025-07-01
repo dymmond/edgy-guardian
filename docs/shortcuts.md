@@ -32,6 +32,41 @@ purpose of using the library is to simplify your life as much as possible in the
 
 To be able o use the shortcuts, those can be imported from `edgy_guardian.shortcuts`.
 
+### `get_obj_perms`
+
+A handy shortcut to fetch all permissions that a user has on a specific object, with optional filtering.
+
+```python
+from edgy_guardian.shortcuts import get_obj_perms
+```
+
+#### Signature
+
+```python
+async def get_obj_perms(user: edgy.Model, obj: Any, **filters: Any) -> list[BasePermission]:
+```
+
+#### Parameters
+
+* **`user`** (`edgy.Model`)
+  The user instance whose permissions you want to retrieve.
+
+* **`obj`** (`Any`)
+  The target object (model instance) against which to check permissions.
+
+* **`**filters`** (`Any`)
+  Optional lookup kwargs (Django-style) to narrow the result set.
+  Examples:
+
+  * `codename__iexact="change_article"`
+  * `name__contains="delete"`
+
+#### Returns
+
+* **`list[BasePermission]`**
+  A list of `BasePermission` instances that the given user holds on the specified object, matching any additional filters provided.
+
+
 ### `assign_perm`
 
 Now this one is a beauty. So simple and yet so powerful.
@@ -85,7 +120,7 @@ async def remove_perm(perm: str, users: Any, obj: Any | None = None) -> None:
 
 - **`perm`**: The permission to revoke. This should be a string representing the permission name.
 - **`users`**: The user or group to revoke the permission for. This can be an instance or list of a users.
-- **`obj`**: The object to revoke the permission for. This can be any object for which permissions are managed. 
+- **`obj`**: The object to revoke the permission for. This can be any object for which permissions are managed.
 
 #### Example
 
@@ -104,7 +139,7 @@ await assign_perm('delete', user_instance, obj=some_object, revoke=True)
 Assign or revoke a permission to/from a group, optionally for specific users and/or an object.
 
 This asynchronous function assigns a specified permission to a group. It can also optionally assign the
-permission for specific users within the group and/or for a specific object. 
+permission for specific users within the group and/or for a specific object.
 
 If the `revoke` parameter is set to True, the permission will be revoked from the group.
 
@@ -149,7 +184,7 @@ await assign_group_perm('delete', group, revoke=True, revoke_users_permissions=T
 This does the opposite of [assign_group_perm](#assign_group_perm) which means, removes a permission from a group.
 
 This asynchronous function revokes a specified permission from a group. It can also optionally revoke the permission for specific users within the group
-and/or for a specific object. If the `revoke_users_permissions` parameter is set to True, 
+and/or for a specific object. If the `revoke_users_permissions` parameter is set to True,
 the permission will also be revoked from the users within the group.
 
 #### Signature
@@ -402,7 +437,7 @@ else:
 
 Checks if a user has a specific permission for a given object.
 
-This asynchronous function verifies whether the specified user has the 
+This asynchronous function verifies whether the specified user has the
 given permission for the provided object by querying the permissions model.
 
 #### Signature
